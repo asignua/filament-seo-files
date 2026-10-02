@@ -42,6 +42,24 @@ class SeoFilesRegistryTest extends TestCase
         $this->assertSame(['en'], SeoFiles::prefixedLocales());
     }
 
+    public function test_locales_can_be_resolved_lazily(): void
+    {
+        $available = ['uk', 'en'];
+
+        SeoFiles::localesUsing(function () use (&$available): array {
+            return ['default' => 'uk', 'all' => $available, 'unprefixed' => 'uk'];
+        });
+
+        $this->assertSame(['uk', 'en'], SeoFiles::allLocales());
+
+        $available = ['uk'];
+
+        $this->assertSame(['uk'], SeoFiles::allLocales());
+        $this->assertSame('uk', SeoFiles::defaultLocale());
+        $this->assertSame('uk', SeoFiles::unprefixedLocale());
+        $this->assertSame([], SeoFiles::prefixedLocales());
+    }
+
     public function test_every_language_can_be_prefixed(): void
     {
         SeoFiles::locales(default: 'en', all: ['en', 'uk'], unprefixed: null);
@@ -105,6 +123,22 @@ class SeoFilesRegistryTest extends TestCase
         $this->assertSame([$sitemapOnly, $everything], SeoFiles::sitemapSources());
         $this->assertSame([$everything], SeoFiles::llmsIndexSources());
         $this->assertSame([$everything], SeoFiles::llmsFullSources());
+    }
+
+    public function test_the_same_source_instance_is_registered_once(): void
+    {
+        $source = new class implements SitemapSource
+        {
+            public function sitemapEntries(): iterable
+            {
+                return [];
+            }
+        };
+
+        SeoFiles::source($source);
+        SeoFiles::source($source);
+
+        $this->assertSame([$source], SeoFiles::sitemapSources());
     }
 
     public function test_an_object_that_is_no_source_is_rejected(): void

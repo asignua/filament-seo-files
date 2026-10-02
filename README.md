@@ -123,6 +123,8 @@ SeoFiles::locales(default: 'en', all: ['en', 'uk', 'de'], unprefixed: 'en');
 
 - `default` is the language of `<loc>` and `x-default`.
 - `unprefixed` is the language served without a `/{locale}/` URL prefix (`null` if every language is prefixed).
+- When the languages live in a config that can change after boot (a CMS), use
+  `SeoFiles::localesUsing(fn () => ['default' => …, 'all' => […], 'unprefixed' => …])`: it is resolved at the moment of use.
 
 For each page `ModelSource` asks your `url()` closure once per language, puts the default language into `<loc>` (or the
 first language that has a URL) and lists every language version as a reciprocal `hreflang` alternate, plus `x-default`.

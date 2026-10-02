@@ -36,6 +36,9 @@ final class SeoFiles
 
     private static bool $unprefixedSet = false;
 
+    /** @var (Closure(): array{default: string, all: list<string>, unprefixed: string|null})|null */
+    private static ?Closure $localesResolver = null;
+
     private static ?Closure $localizedUrl = null;
 
     private static ?Closure $ownedPath = null;
@@ -49,7 +52,8 @@ final class SeoFiles
     /** @var list<object> */
     private static array $sources = [];
 
-    private static bool $routesRegistered = false;
+    /** The application the routes were registered for (a test process boots many). */
+    private static ?object $routesRegisteredFor = null;
 
     /**
      * The site's base URL (scheme + host, no trailing slash). A scheduler has no request,
@@ -76,6 +80,17 @@ final class SeoFiles
         self::$locales = $all;
         self::$unprefixed = $unprefixed;
         self::$unprefixedSet = true;
+    }
+
+    /**
+     * Like {@see locales()}, but resolved at the moment of use: for a host whose languages
+     * live in a config that can change after boot (a CMS, a test). Wins over `locales()`.
+     *
+     * @param Closure(): array{default: string, all: list<string>, unprefixed: string|null} $resolver
+     */
+    public static function localesUsing(Closure $resolver): void
+    {
+        self::$localesResolver = $resolver;
     }
 
     /**
@@ -146,7 +161,11 @@ final class SeoFiles
                 ));
             }
 
-            self::$sources[] = $source;
+            // The same instance twice is a mistake nobody wants (every page would be listed
+            // twice): a provider that boots once per test application would add it each time.
+            if (!in_array($source, self::$sources, true)) {
+                self::$sources[] = $source;
+            }
         }
     }
 
@@ -160,11 +179,11 @@ final class SeoFiles
     {
         $prefixed = self::prefixedLocales();
 
-        if ($prefixed === [] || self::$routesRegistered) {
+        if ($prefixed === [] || self::$routesRegisteredFor === app()) {
             return;
         }
 
-        self::$routesRegistered = true;
+        self::$routesRegisteredFor = app();
 
         $pattern = implode('|', array_map(preg_quote(...), $prefixed));
 
@@ -191,13 +210,14 @@ final class SeoFiles
         self::$locales = null;
         self::$unprefixed = null;
         self::$unprefixedSet = false;
+        self::$localesResolver = null;
         self::$localizedUrl = null;
         self::$ownedPath = null;
         self::$siteName = null;
         self::$description = null;
         self::$robotsTemplate = null;
         self::$sources = [];
-        self::$routesRegistered = false;
+        self::$routesRegisteredFor = null;
     }
 
     public static function baseUrl(): string
@@ -211,6 +231,10 @@ final class SeoFiles
 
     public static function defaultLocale(): string
     {
+        if (self::$localesResolver !== null) {
+            return (self::$localesResolver)()['default'];
+        }
+
         return self::$defaultLocale ?? (string) config('app.locale');
     }
 
@@ -221,6 +245,12 @@ final class SeoFiles
      */
     public static function allLocales(): array
     {
+        if (self::$localesResolver !== null) {
+            $resolved = (self::$localesResolver)();
+
+            return array_values(array_unique([$resolved['default'], ...$resolved['all']]));
+        }
+
         return self::$locales ?? [self::defaultLocale()];
     }
 
@@ -229,6 +259,10 @@ final class SeoFiles
      */
     public static function unprefixedLocale(): ?string
     {
+        if (self::$localesResolver !== null) {
+            return (self::$localesResolver)()['unprefixed'];
+        }
+
         return self::$unprefixedSet ? self::$unprefixed : self::defaultLocale();
     }
 
