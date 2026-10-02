@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Tests\Feature;
 
+use Asignua\FilamentSeoFiles\Contracts\SitemapSource;
+use Asignua\FilamentSeoFiles\Data\SitemapEntry;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
 use Workbench\App\Models\Post;
@@ -247,6 +249,51 @@ class SitemapCommandTest extends TestCase
         $this->artisan('seo-files:sitemap')->assertExitCode(0);
 
         $this->assertSame(0, substr_count($this->sitemapXml(), '<loc>'));
+    }
+
+    public function test_the_reported_count_is_the_number_of_url_entries(): void
+    {
+        // Two pages in two languages and one English-only page: 3 pages, 5 <url> entries.
+        $this->makePost('a', 'A', 'А');
+        $this->makePost('b', 'B', 'Б');
+        $this->makePost('c', 'C');
+
+        $this->artisan('seo-files:sitemap')
+            ->expectsOutputToContain('Sitemap: 5 URLs (3 pages from sources + 0 manual)')
+            ->assertExitCode(0);
+
+        $this->assertSame(5, substr_count($this->sitemapXml(), '<url>'));
+    }
+
+    public function test_overlapping_sources_keep_hreflang_reciprocal(): void
+    {
+        // The second source lists, as its uk version, an address the first one already
+        // emitted in its own cluster. Listing it again would be a one-way hreflang.
+        SeoFiles::flush();
+        $this->twoLanguages();
+        SeoFiles::source(new class implements SitemapSource
+        {
+            public function sitemapEntries(): iterable
+            {
+                yield new SitemapEntry('https://site.test/one', ['en' => 'https://site.test/one', 'uk' => 'https://site.test/uk/shared']);
+            }
+        });
+        SeoFiles::source(new class implements SitemapSource
+        {
+            public function sitemapEntries(): iterable
+            {
+                yield new SitemapEntry('https://site.test/two', ['en' => 'https://site.test/two', 'uk' => 'https://site.test/uk/shared']);
+            }
+        });
+
+        $this->artisan('seo-files:sitemap')->assertExitCode(0);
+
+        preg_match_all('~<url>.*?</url>~s', $this->sitemapXml(), $blocks);
+        $two = array_values(array_filter($blocks[0], fn (string $block): bool => str_contains($block, '<loc>https://site.test/two</loc>')));
+
+        $this->assertCount(1, $two);
+        $this->assertStringNotContainsString('https://site.test/uk/shared', $two[0]);
+        $this->assertSame(1, substr_count($this->sitemapXml(), '<loc>https://site.test/uk/shared</loc>'));
     }
 
     public function test_it_leaves_no_temporary_files_behind(): void

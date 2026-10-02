@@ -6,6 +6,7 @@ namespace Asignua\FilamentSeoFiles\Support;
 
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\File;
 
@@ -96,6 +97,11 @@ class SitemapFile
     /**
      * The number of `<url>` entries in the sitemap (across all parts when it is an index),
      * counted without parsing the files; null when nothing has been generated yet.
+     *
+     * Counting streams every file (up to ~50 MB each), and the "SEO files" page asks on
+     * every Livewire round trip, so the result is cached against the sitemap's mtime and
+     * size: a generation run rewrites `sitemap.xml` last (after its parts), which changes
+     * the stamp and invalidates the count.
      */
     public function urlCount(): ?int
     {
@@ -103,11 +109,24 @@ class SitemapFile
             return null;
         }
 
-        if (!$this->isIndex()) {
-            return $this->countIn($this->path());
+        $path = $this->path();
+        clearstatcache(true, $path);
+        $stamp = @filemtime($path).':'.@filesize($path);
+        $key = 'filament-seo-files:url-count:'.md5($path);
+
+        $cached = Cache::get($key);
+
+        if (is_array($cached) && ($cached['stamp'] ?? null) === $stamp && is_int($cached['count'] ?? null)) {
+            return $cached['count'];
         }
 
-        return array_sum(array_map($this->countIn(...), $this->chunkFiles()));
+        $count = $this->isIndex()
+            ? array_sum(array_map($this->countIn(...), $this->chunkFiles()))
+            : $this->countIn($path);
+
+        Cache::put($key, ['stamp' => $stamp, 'count' => $count], now()->addDay());
+
+        return $count;
     }
 
     /**

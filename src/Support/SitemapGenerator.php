@@ -69,7 +69,10 @@ class SitemapGenerator
     private SitemapFile $files;
 
     /**
-     * @return array{sources: int, custom: int, skipped: int, path: string, chunks: int}
+     * @return array{sources: int, custom: int, skipped: int, path: string, chunks: int, urls: int}
+     *
+     * `sources` and `custom` count pages (hreflang clusters); `urls` counts the `<url>`
+     * entries written — one per language version.
      */
     public function generate(): array
     {
@@ -91,7 +94,7 @@ class SitemapGenerator
             $this->writeAtomically($path, $this->buffer->render());
             $this->deleteStaleParts([]);
 
-            return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => 0];
+            return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => 0, 'urls' => $this->totalUrls];
         }
 
         // The last, partly filled buffer is a part as well (an empty one only when nothing
@@ -116,7 +119,7 @@ class SitemapGenerator
         $this->writeAtomically($path, $index->render());
         $this->deleteStaleParts($written);
 
-        return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => count($this->parts)];
+        return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => count($this->parts), 'urls' => $this->totalUrls];
     }
 
     /**
@@ -136,6 +139,13 @@ class SitemapGenerator
                 $alternates = [];
 
                 foreach ($entry->alternates as $locale => $href) {
+                    // A language version an earlier cluster already emitted cannot be an
+                    // alternate here: that cluster does not list this one back, and a
+                    // non-reciprocal hreflang is discarded wholesale (see $seen).
+                    if ($href !== $entry->url && isset($this->seen[$href])) {
+                        continue;
+                    }
+
                     $alternates[(string) $locale] = $href;
                 }
 

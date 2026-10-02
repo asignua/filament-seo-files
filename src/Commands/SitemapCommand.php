@@ -20,8 +20,9 @@ class SitemapCommand extends Command
     {
         $result = $generator->generate();
 
-        $total = $result['sources'] + $result['custom'];
-        $this->info("Sitemap: {$total} URLs ({$result['sources']} from sources + {$result['custom']} manual) → {$this->relative($result['path'])}");
+        // One <url> per language version: on a multilingual site there are more URLs than
+        // pages, and the count must match the file (and the "SEO files" page).
+        $this->info("Sitemap: {$result['urls']} URLs ({$result['sources']} pages from sources + {$result['custom']} manual) → {$this->relative($result['path'])}");
 
         if ($result['chunks'] > 0) {
             $this->info("sitemap.xml is an index of {$result['chunks']} part(s)");

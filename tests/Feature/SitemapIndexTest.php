@@ -215,6 +215,27 @@ class SitemapIndexTest extends TestCase
         $this->assertCount(3, $file->chunkFiles());
     }
 
+    public function test_the_url_count_is_cached_until_the_sitemap_changes(): void
+    {
+        $this->posts(2);
+        $this->artisan('seo-files:sitemap')->assertExitCode(0);
+
+        $file = new SitemapFile;
+        $path = $file->path();
+        $this->assertSame(4, $file->urlCount());
+
+        // Same size and mtime, different content: the count is not rescanned.
+        $mtime = (int) filemtime($path);
+        $xml = (string) file_get_contents($path);
+        file_put_contents($path, str_replace('<url>', '<abc>', $xml));
+        touch($path, $mtime);
+        $this->assertSame(4, $file->urlCount());
+
+        // A real change (another size) is counted again.
+        file_put_contents($path, str_replace('<url>', '<abc>', $xml).' ');
+        $this->assertSame(0, $file->urlCount());
+    }
+
     public function test_the_index_marker_is_found_without_reading_the_whole_file(): void
     {
         // A single sitemap padded far past the head: isIndex() must look at the root
