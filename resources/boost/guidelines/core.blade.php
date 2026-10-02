@@ -1,0 +1,8 @@
+## Filament SEO Files (asignua/filament-seo-files)
+
+- Generates `sitemap.xml` (hreflang, sitemap index above 50 000 URLs), `robots.txt`, `llms.txt` and `llms-full.txt`. Panel UI: `->plugin(SeoFilesPlugin::make())`. Everything else works WITHOUT a panel: configure the static registry `Asignua\FilamentSeoFiles\SeoFiles` in `AppServiceProvider` (`baseUrlUsing`, `locales(default:, all:, unprefixed:)`, `localizedUrlUsing`, `ownedPathUsing`, `siteNameUsing`, `descriptionUsing`, `robotsTemplateUsing`, `source(...)`).
+- Pages come from sources. Eloquent model in a few lines: `SeoFiles::source(ModelSource::make(Post::class)->url(fn (Post $post, string $locale): ?string => route('posts.show', $post))->title(...)->description(...)->body(...)->section('Blog'))`. A `url` closure returning `null` skips the record in that language. Custom sources implement `SitemapSource`, `LlmsIndexSource`, `LlmsFullSource` (any subset) and return the readonly DTOs `SitemapEntry`, `LlmsSection`/`LlmsLink`, `LlmsDocument`.
+- Run `php artisan vendor:publish --tag=filament-seo-files-migrations` and migrate for the manual "Sitemap URLs" table. Write `SitemapUrl` rows only through `SitemapUrlRepository` (the model has `$guarded = ['*']`).
+- Commands: `seo-files:sitemap`, `seo-files:llms {--locale=*}`. Schedule: `filament-seo-files.schedule.enabled` (off by default, needs the Laravel scheduler).
+- Prefixed languages get `/{locale}/llms.txt` and `/{locale}/llms-full.txt` as ROUTES (a real `public/{locale}/` directory would shadow the home page). A site with a catch-all route sets `routes.register` to `false` and calls `SeoFiles::routes()` before it.
+- Authorization: `SeoFilesPlugin::make()->authorize(fn (): bool => ...)`, or define the `seo-files.manage` gate.
