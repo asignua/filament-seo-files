@@ -60,14 +60,14 @@ class LlmsTxtFile
 
     private function optionalSection(string $locale): LlmsSection
     {
-        $sitemap = basename((new SitemapFile)->path());
+        $file = new SitemapFile;
 
         // "Optional" has a special meaning in the spec: an agent may skip these links when
         // it needs a shorter context.
         return new LlmsSection('Optional', [
             new LlmsLink(
-                $sitemap,
-                SeoFiles::baseUrl().'/'.$sitemap,
+                basename($file->path()),
+                $file->url(),
                 trans('filament-seo-files::seo-files.llms.sitemap_description', [], $locale),
             ),
         ]);

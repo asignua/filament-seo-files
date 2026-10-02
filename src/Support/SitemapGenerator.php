@@ -100,7 +100,7 @@ class SitemapGenerator
 
         foreach ($this->parts as $part) {
             $index->add(
-                SitemapTag::create(SeoFiles::baseUrl().'/'.basename($part['path']))
+                SitemapTag::create($this->files->urlFor($part['path']))
                     ->setLastModificationDate($part['lastModified']),
             );
             $written[] = $part['path'];

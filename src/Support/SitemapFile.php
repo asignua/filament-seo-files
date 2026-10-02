@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Support;
 
+use Asignua\FilamentSeoFiles\SeoFiles;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\File;
@@ -18,6 +19,29 @@ class SitemapFile
     public function path(): string
     {
         return (string) (config('filament-seo-files.sitemap.path') ?? public_path('sitemap.xml'));
+    }
+
+    /**
+     * The public address of a file written under `public/` — the sitemap itself or one of
+     * its parts. Relative to the web root, not just the file name: with `sitemap.path` in a
+     * subdirectory (`public/sitemaps/sitemap.xml`) the index, robots.txt and llms.txt must
+     * point at `/sitemaps/…`. A path outside `public/` falls back to the file name at the root.
+     */
+    public function urlFor(string $path): string
+    {
+        $public = rtrim(str_replace('\\', '/', public_path()), '/').'/';
+        $path = str_replace('\\', '/', $path);
+
+        $relative = str_starts_with($path, $public)
+            ? substr($path, strlen($public))
+            : basename($path);
+
+        return SeoFiles::baseUrl().'/'.ltrim($relative, '/');
+    }
+
+    public function url(): string
+    {
+        return $this->urlFor($this->path());
     }
 
     public function exists(): bool

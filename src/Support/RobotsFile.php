@@ -33,8 +33,7 @@ class RobotsFile
 
     public function template(): string
     {
-        $base = SeoFiles::baseUrl();
-        $sitemap = basename((new SitemapFile)->path());
+        $sitemap = (new SitemapFile)->url();
 
         // Content-Signal (contentsignals.org) declares the policy for using the content with
         // AI. Default: search and agent answers are allowed (they bring traffic), model
@@ -45,7 +44,7 @@ class RobotsFile
         Content-Signal: search=yes, ai-input=yes, ai-train=no
         Allow: /
 
-        Sitemap: {$base}/{$sitemap}
+        Sitemap: {$sitemap}
         TXT;
 
         return SeoFiles::robotsTemplate($default);

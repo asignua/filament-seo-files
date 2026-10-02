@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Tests\Feature;
 
+use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
+use Asignua\FilamentSeoFiles\Support\RobotsFile;
 use Asignua\FilamentSeoFiles\Support\SitemapFile;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
 use Illuminate\Support\Facades\File;
@@ -221,5 +223,27 @@ class SitemapIndexTest extends TestCase
         foreach ($matches[1] as $file) {
             $this->assertFileExists($this->publicPath.'/'.$file);
         }
+    }
+
+    /**
+     * A sitemap in a subdirectory of public/: the index, robots.txt and llms.txt must point
+     * at /sitemaps/…, not at the site root.
+     */
+    public function test_a_sitemap_in_a_subdirectory_is_linked_by_its_public_path(): void
+    {
+        config([
+            'filament-seo-files.sitemap.path' => $this->publicPath.'/sitemaps/sitemap.xml',
+            'filament-seo-files.sitemap.max_urls' => 3,
+        ]);
+        $this->posts(4);
+
+        $this->artisan('seo-files:sitemap')->assertExitCode(0);
+
+        $index = (string) file_get_contents($this->publicPath.'/sitemaps/sitemap.xml');
+
+        $this->assertStringContainsString('<loc>https://site.test/sitemaps/sitemap-1.xml</loc>', $index);
+        $this->assertStringContainsString('<loc>https://site.test/sitemaps/sitemap-2.xml</loc>', $index);
+        $this->assertStringContainsString('Sitemap: https://site.test/sitemaps/sitemap.xml', (new RobotsFile)->template());
+        $this->assertStringContainsString('(https://site.test/sitemaps/sitemap.xml)', (new LlmsTxtFile)->template('en'));
     }
 }
