@@ -7,6 +7,7 @@ namespace Asignua\FilamentSeoFiles\Support;
 use Asignua\FilamentSeoFiles\Data\LlmsLink;
 use Asignua\FilamentSeoFiles\Data\LlmsSection;
 use Asignua\FilamentSeoFiles\SeoFiles;
+use Asignua\FilamentSeoFiles\Support\Concerns\GeneratesOnDemand;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -17,12 +18,14 @@ use Illuminate\Support\Facades\File;
  * sources rather than an inline heredoc, and there are several files — one per language.
  * For where the files live see {@see LlmsPaths}.
  *
- * The file deliberately stays a SHORT curated index: single records (hundreds of grants,
- * say) are not listed — that is what `sitemap.xml` is for, and the `## Optional` section
- * points at it.
+ * The file deliberately stays a SHORT curated index: a `ModelSource` lists at most
+ * `llms.index_limit` records (newest first) — the complete list is what `sitemap.xml` is
+ * for, and the `## Optional` section points at it.
  */
 class LlmsTxtFile
 {
+    use GeneratesOnDemand;
+
     public function path(string $locale): string
     {
         return LlmsPaths::for('index', $locale);
@@ -39,8 +42,7 @@ class LlmsTxtFile
     {
         $path = $this->path($locale);
 
-        File::ensureDirectoryExists(dirname($path));
-        File::put($path, rtrim($content)."\n");
+        AtomicFile::put($path, rtrim($content)."\n");
     }
 
     public function template(string $locale): string

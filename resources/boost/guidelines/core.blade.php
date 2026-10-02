@@ -5,4 +5,4 @@
 - Run `php artisan vendor:publish --tag=filament-seo-files-migrations` and migrate for the manual "Sitemap URLs" table. Write `SitemapUrl` rows only through `SitemapUrlRepository` (the model has `$guarded = ['*']`).
 - Commands: `seo-files:sitemap`, `seo-files:llms {--locale=*}`. Schedule: `filament-seo-files.schedule.enabled` (off by default, needs the Laravel scheduler).
 - Prefixed languages get `/{locale}/llms.txt` and `/{locale}/llms-full.txt` as ROUTES (a real `public/{locale}/` directory would shadow the home page). A site with a catch-all route sets `routes.register` to `false` and calls `SeoFiles::routes()` before it.
-- Authorization: `SeoFilesPlugin::make()->authorize(fn (): bool => ...)`, or define the `seo-files.manage` gate.
+- Authorization fails closed: ALWAYS pass `SeoFilesPlugin::make()->authorize(fn (): bool => ...)` (or `->authorize(true)` for every panel user), or define the `seo-files.manage` gate — otherwise nobody sees the page, the resource or the actions. The four public actions check `SeoFilesPlugin::allows()` themselves.

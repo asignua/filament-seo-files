@@ -189,12 +189,17 @@ final class SeoFiles
 
         // A route, not a static file: a real `public/{locale}/` directory would shadow the
         // site's `/{locale}/` home page (see LlmsTxtFile::path()).
-        Route::middleware(['web'])
+        // No `web` group by default: it starts a session and sets cookies, which a plain text
+        // file does not need and which keeps a CDN from caching the response.
+        /** @var list<string> $middleware */
+        $middleware = (array) config('filament-seo-files.routes.middleware', []);
+
+        Route::middleware($middleware)
             ->get('/{locale}/llms.txt', LlmsController::class)
             ->where('locale', $pattern)
             ->name('seo-files.llms.locale');
 
-        Route::middleware(['web'])
+        Route::middleware($middleware)
             ->get('/{locale}/llms-full.txt', LlmsFullController::class)
             ->where('locale', $pattern)
             ->name('seo-files.llms-full.locale');

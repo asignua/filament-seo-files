@@ -23,6 +23,13 @@ class LlmsFullRenderTest extends TestCase
         $this->assertStringContainsString('The **body** text.', $e);
     }
 
+    public function test_a_line_break_in_the_title_does_not_break_the_entry_header(): void
+    {
+        $e = LlmsFull::entry("Two\nlines", 'https://x.test/e', '');
+
+        $this->assertSame("# Two lines\nSource: https://x.test/e", $e);
+    }
+
     public function test_entry_with_empty_body_is_just_heading_and_source(): void
     {
         $e = LlmsFull::entry('Empty', 'https://x.test/e', '   ');

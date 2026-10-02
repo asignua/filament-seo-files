@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Commands;
 
+use Asignua\FilamentSeoFiles\Commands\Concerns\DisplaysRelativePaths;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\LlmsFullTxtFile;
 use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
@@ -17,6 +18,8 @@ use Illuminate\Console\Command;
  */
 class LlmsCommand extends Command
 {
+    use DisplaysRelativePaths;
+
     protected $signature = 'seo-files:llms {--locale=* : Limit generation to these languages}';
 
     protected $description = 'Generate llms.txt and llms-full.txt for every language (index + full site content for AI agents)';
@@ -50,12 +53,5 @@ class LlmsCommand extends Command
         }
 
         return self::SUCCESS;
-    }
-
-    private function relative(string $path): string
-    {
-        $public = public_path().'/';
-
-        return str_starts_with($path, $public) ? 'public/'.substr($path, strlen($public)) : $path;
     }
 }

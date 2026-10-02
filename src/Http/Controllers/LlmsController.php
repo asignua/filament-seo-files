@@ -6,6 +6,7 @@ namespace Asignua\FilamentSeoFiles\Http\Controllers;
 
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -16,8 +17,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * site's `/{locale}/` home page ({@see \Asignua\FilamentSeoFiles\Support\LlmsPaths}). The
  * unprefixed language needs none of this: its `public/llms.txt` is a file in the web root.
  *
- * `read()` serves the stored file or, when it has not been generated yet, a freshly built
- * template — so the URL works even before the first `seo-files:llms` run.
+ * `serve()` returns the stored file or, when it has not been generated yet, builds it ONCE
+ * and stores it (behind a lock) — so the URL works before the first `seo-files:llms` run,
+ * but an anonymous visitor can never make the server rebuild the document per request.
  */
 class LlmsController
 {
@@ -28,6 +30,13 @@ class LlmsController
             throw new NotFoundHttpException;
         }
 
-        return response($file->read($locale), 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+        try {
+            $content = $file->serve($locale);
+        } catch (LockTimeoutException) {
+            // Another request is still building the file: ask the client to come back.
+            return response('', 503, ['Retry-After' => '30', 'Content-Type' => 'text/plain; charset=UTF-8']);
+        }
+
+        return response($content, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 }

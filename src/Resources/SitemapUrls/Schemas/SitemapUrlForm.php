@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Resources\SitemapUrls\Schemas;
 
+use Asignua\FilamentSeoFiles\Repositories\SitemapUrlRepository;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\SitemapLocation;
 use Closure;
@@ -16,6 +17,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 
 class SitemapUrlForm
@@ -78,7 +80,7 @@ class SitemapUrlForm
                     static fn (TextInput $field): TextInput => $field->required(),
                     static fn (TextInput $field): TextInput => $field->requiredWithoutAll($others),
                 )
-                ->rule(static fn (): Closure => self::validator($locale)),
+                ->rule(static fn (?Model $record): Closure => self::validator($locale, $record)),
 
             // A preview, not just helper text: the rule "a path without the language prefix,
             // the generator adds the host and the prefix" does not get across in a
@@ -116,9 +118,9 @@ class SitemapUrlForm
      * Checks of one address. The hybrid format: a full address with a scheme, or a path from
      * the root WITHOUT the language prefix.
      */
-    private static function validator(string $locale): Closure
+    private static function validator(string $locale, ?Model $record): Closure
     {
-        return static function (string $attribute, mixed $value, Closure $fail) use ($locale): void {
+        return static function (string $attribute, mixed $value, Closure $fail) use ($locale, $record): void {
             $value = trim((string) $value);
 
             if ($value === '') {
@@ -150,12 +152,6 @@ class SitemapUrlForm
                 return;
             }
 
-            if (trim($value, '/') === '') {
-                $fail(__('filament-seo-files::seo-files.validation.home'));
-
-                return;
-            }
-
             if (SitemapLocation::startsWithLanguagePrefix($value)) {
                 $fail(__('filament-seo-files::seo-files.validation.language_prefix'));
 
@@ -163,9 +159,20 @@ class SitemapUrlForm
             }
 
             // The only check that actually catches a duplicate of a real page: the site
-            // knows its own paths, and the generator takes its first pass from there.
-            if (SeoFiles::ownsPath($locale, SitemapLocation::normalize($value))) {
+            // knows its own paths, and the generator takes its first pass from there. The
+            // root path is asked about as `''` — the home page is no exception: it is in the
+            // sitemap only when a source emits it, and then the site says it owns it.
+            if (SeoFiles::ownsPath($locale, trim(SitemapLocation::normalize($value), '/'))) {
                 $fail(__('filament-seo-files::seo-files.validation.owned'));
+
+                return;
+            }
+
+            // Another manual record with the same address in this language.
+            $repository = app(SitemapUrlRepository::class);
+
+            if ($repository->existsInLocale($locale, SitemapLocation::normalize($value), $record?->getKey())) {
+                $fail(__('filament-seo-files::seo-files.validation.duplicate'));
             }
         };
     }

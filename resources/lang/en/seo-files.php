@@ -7,7 +7,6 @@ return [
         'sitemap_description' => 'Full list of site URLs',
     ],
     'actions' => [
-        'run' => 'Run',
         'generate' => 'Generate',
         'edit' => 'Edit',
         'edit_file' => 'Edit :file',
@@ -16,6 +15,8 @@ return [
         'saved' => 'Saved',
         'finished' => 'Command finished',
         'failed' => 'Command failed',
+        'generate_llms_warning' => 'Every language\'s llms.txt and llms-full.txt is rebuilt from the sources. Changes made in the editor are replaced.',
+        'scheduled_overwrite' => 'The files are also rebuilt daily at :time, which replaces changes made here.',
     ],
     'fields' => [
         'language' => 'Language',
@@ -37,9 +38,9 @@ return [
         'spaces' => 'The address cannot contain spaces.',
         'invalid' => 'Invalid address.',
         'scheme_or_path' => 'Enter a full address with a scheme or a path without one.',
-        'home' => 'The home page is already in the sitemap.',
         'language_prefix' => 'Do not add the language prefix, it is added automatically.',
         'owned' => 'This address already belongs to a page of the site.',
+        'duplicate' => 'Another manual URL already has this address in this language.',
     ],
     'page' => [
         'navigation' => 'SEO files',

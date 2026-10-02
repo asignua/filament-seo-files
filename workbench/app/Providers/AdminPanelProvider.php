@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->plugin(SeoFilesPlugin::make())
+            ->plugin(SeoFilesPlugin::make()->authorize(true))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

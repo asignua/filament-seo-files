@@ -31,6 +31,11 @@ use Spatie\Sitemap\Tags\Url;
  * itself becomes a `<sitemapindex>` listing the parts; otherwise it is the single file as
  * ever. A hreflang cluster is atomic — it is never cut between two parts — and the
  * deduplication map is shared by all parts, so an address appears once in the whole set.
+ *
+ * A cluster is emitted as one `<url>` PER LANGUAGE VERSION, each listing the same full set
+ * of alternates plus `x-default`: that is what Google's sitemap hreflang method expects —
+ * a version that is only an alternate is never declared as a URL of the sitemap. hreflang
+ * values are BCP 47 (`pt-BR`), not Laravel's `pt_BR`.
  */
 class SitemapGenerator
 {
@@ -127,23 +132,14 @@ class SitemapGenerator
                     continue;
                 }
 
-                $lastModified = $entry->lastModified ?? now();
-
-                $url = Url::create($entry->url)
-                    ->setLastModificationDate($lastModified);
-                // NO setPriority / setChangeFrequency (Google ignores them).
-                $this->seen[$entry->url] = true;
-
                 // hreflang alternates: every language version the source lists.
+                $alternates = [];
+
                 foreach ($entry->alternates as $locale => $href) {
-                    $url->addAlternate($href, (string) $locale);
-                    $this->seen[$href] = true;
+                    $alternates[(string) $locale] = $href;
                 }
 
-                // x-default → the default-language URL.
-                $url->addAlternate($entry->url, 'x-default');
-
-                $this->push($url, $entry->url, $entry->alternates, $lastModified);
+                $this->pushCluster($entry->url, $alternates, $entry->lastModified ?? now());
                 $count++;
             }
         }
@@ -152,7 +148,7 @@ class SitemapGenerator
     }
 
     /**
-     * Pass 2: the active manual addresses. One record = one <url> with alternates for
+     * Pass 2: the active manual addresses. One record = one cluster with alternates for
      * every filled language.
      *
      * @return array{0: int, 1: int} added, skipped as duplicates
@@ -173,10 +169,10 @@ class SitemapGenerator
                     continue;
                 }
 
-                // <loc> is the default language, or the first filled one when it is empty:
-                // an English-only landing page or an /en/-only feed is a legitimate record,
-                // and silently dropping it would be exactly the invisible failure nothing
-                // here could catch.
+                // The cluster's first address is the default language, or the first filled
+                // one when it is empty: an English-only landing page or an /en/-only feed is
+                // a legitimate record, and silently dropping it would be exactly the
+                // invisible failure nothing here could catch.
                 $loc = $cluster[array_key_first($cluster)];
 
                 if (isset($this->seen[$loc])) {
@@ -185,29 +181,14 @@ class SitemapGenerator
                     continue;
                 }
 
-                $lastModified = $row->updated_at ?? now();
+                // A language version already emitted by another cluster cannot be an
+                // alternate here — see the note on $seen.
+                $alternates = array_filter(
+                    $cluster,
+                    fn (string $href): bool => $href === $loc || !isset($this->seen[$href]),
+                );
 
-                $url = Url::create($loc)
-                    ->setLastModificationDate($lastModified);
-                // NO setPriority / setChangeFrequency — the same rule as in pass 1.
-
-                foreach ($cluster as $locale => $href) {
-                    // A language version already emitted by another cluster cannot be an
-                    // alternate here — see the note on $seen.
-                    if ($href !== $loc && isset($this->seen[$href])) {
-                        continue;
-                    }
-
-                    $url->addAlternate($href, $locale);
-                }
-
-                $url->addAlternate($loc, 'x-default');
-
-                foreach ($cluster as $href) {
-                    $this->seen[$href] = true;
-                }
-
-                $this->push($url, $loc, $cluster, $lastModified);
+                $this->pushCluster($loc, $alternates, $row->updated_at ?? now());
                 $count++;
             }
         });
@@ -216,26 +197,65 @@ class SitemapGenerator
     }
 
     /**
-     * Adds a ready tag to the buffer, first closing the buffer as a part when the tag would
-     * overflow it. The whole cluster goes into one part.
+     * One hreflang cluster: a `<url>` for EVERY language version (Google expects each
+     * version declared as a `<loc>` of its own, each listing the full set of alternates
+     * including itself), plus `x-default` pointing at the default-language address.
+     * NO setPriority / setChangeFrequency (Google ignores them).
      *
-     * @param array<string, string> $alternates
+     * @param array<string, string> $alternates locale => absolute address
      */
-    private function push(Url $url, string $loc, array $alternates, DateTimeInterface $lastModified): void
+    private function pushCluster(string $default, array $alternates, DateTimeInterface $lastModified): void
     {
-        $bytes = $this->estimateBytes($loc, $alternates);
+        $hrefs = array_values(array_unique([$default, ...array_values($alternates)]));
+        $urls = [];
 
+        foreach ($hrefs as $href) {
+            // An address another cluster already declared stays an alternate here but
+            // never becomes a second <loc>.
+            if ($href !== $default && isset($this->seen[$href])) {
+                continue;
+            }
+
+            $url = Url::create($href)->setLastModificationDate($lastModified);
+
+            foreach ($alternates as $locale => $alternate) {
+                $url->addAlternate($alternate, SitemapLocation::hreflang($locale));
+            }
+
+            $url->addAlternate($default, 'x-default');
+
+            $urls[] = $url;
+        }
+
+        foreach ($hrefs as $href) {
+            $this->seen[$href] = true;
+        }
+
+        $this->push($urls, $this->estimateBytes($default, $alternates) * count($urls), $lastModified);
+    }
+
+    /**
+     * Adds the tags of one cluster to the buffer, first closing the buffer as a part when
+     * they would overflow it. The whole cluster goes into one part.
+     *
+     * @param list<Url> $urls
+     */
+    private function push(array $urls, int $bytes, DateTimeInterface $lastModified): void
+    {
         if ($this->mode !== 'never' && $this->bufferUrls > 0 && (
-            $this->bufferUrls >= $this->maxUrls()
+            $this->bufferUrls + count($urls) > $this->maxUrls()
             || $this->bufferBytes + $bytes > $this->maxBytes()
         )) {
             $this->flushPart();
         }
 
-        $this->buffer->add($url);
-        $this->bufferUrls++;
+        foreach ($urls as $url) {
+            $this->buffer->add($url);
+        }
+
+        $this->bufferUrls += count($urls);
         $this->bufferBytes += $bytes;
-        $this->totalUrls++;
+        $this->totalUrls += count($urls);
 
         if ($this->bufferLastModified === null || $lastModified > $this->bufferLastModified) {
             $this->bufferLastModified = $lastModified;
@@ -269,18 +289,23 @@ class SitemapGenerator
      * work. The constants cover the markup around the values; the estimate errs on the large
      * side and the threshold (`sitemap.max_bytes`) sits below the protocol's 50 MB.
      *
+     * One `<url>` of a cluster: its `<loc>` (at most the longest address) plus every
+     * alternate and `x-default`.
+     *
      * @param array<string, string> $alternates
      */
-    private function estimateBytes(string $loc, array $alternates): int
+    private function estimateBytes(string $default, array $alternates): int
     {
-        $bytes = strlen($loc) + 90;
+        $longest = strlen($default);
+        $bytes = 0;
 
         foreach ($alternates as $locale => $href) {
             $bytes += strlen($href) + strlen((string) $locale) + 70;
+            $longest = max($longest, strlen($href));
         }
 
-        // The x-default alternate.
-        return $bytes + strlen($loc) + 80;
+        // <loc> and the x-default alternate.
+        return $bytes + 2 * $longest + 170;
     }
 
     /**
@@ -303,10 +328,7 @@ class SitemapGenerator
      */
     private function writeAtomically(string $path, string $contents): void
     {
-        $temporary = $path.'.'.uniqid('tmp', true);
-
-        File::put($temporary, $contents);
-        rename($temporary, $path);
+        AtomicFile::put($path, $contents);
     }
 
     private function splitMode(): string

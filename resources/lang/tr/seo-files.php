@@ -7,7 +7,6 @@ return [
         'sitemap_description' => 'Sitenin tüm URL’lerinin tam listesi',
     ],
     'actions' => [
-        'run' => 'Çalıştır',
         'generate' => 'Oluştur',
         'edit' => 'Düzenle',
         'edit_file' => ':file düzenle',
@@ -16,6 +15,8 @@ return [
         'saved' => 'Kaydedildi',
         'finished' => 'Komut çalıştırıldı',
         'failed' => 'Komut başarısız oldu',
+        'generate_llms_warning' => 'Tüm dillerin llms.txt ve llms-full.txt dosyaları kaynaklardan yeniden oluşturulur. Düzenleyicide yapılan değişikliklerin yerine yenileri yazılır.',
+        'scheduled_overwrite' => 'Dosyalar ayrıca her gün :time saatinde yeniden oluşturulur ve burada yapılan değişikliklerin yerine yenileri yazılır.',
     ],
     'fields' => [
         'language' => 'Dil',
@@ -37,9 +38,9 @@ return [
         'spaces' => 'Adres boşluk içeremez.',
         'invalid' => 'Geçersiz adres.',
         'scheme_or_path' => 'Şemalı tam bir adres veya şemasız bir yol girin.',
-        'home' => 'Ana sayfa zaten site haritasında.',
         'language_prefix' => 'Dil önekini eklemeyin, otomatik olarak eklenir.',
         'owned' => 'Bu adres zaten sitenin bir sayfasına ait.',
+        'duplicate' => 'Başka bir manuel URL bu dilde zaten bu adrese sahip.',
     ],
     'page' => [
         'navigation' => 'SEO dosyaları',

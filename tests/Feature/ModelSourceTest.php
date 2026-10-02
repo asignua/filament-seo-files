@@ -91,6 +91,30 @@ class ModelSourceTest extends TestCase
         $this->assertSame('https://site.test/posts/a', $sections[0]->links[0]->url);
     }
 
+    public function test_the_llms_index_lists_at_most_the_index_limit_newest_first(): void
+    {
+        foreach (['a', 'b', 'c', 'd'] as $slug) {
+            $this->makePost($slug, strtoupper($slug));
+        }
+
+        $titles = fn (ModelSource $source): array => array_map(
+            fn ($link): string => $link->title,
+            iterator_to_array($source->llmsSections('en'), false)[0]->links,
+        );
+
+        // llms.txt is a short index: the complete list is sitemap.xml's job.
+        $this->assertSame(['D', 'C'], $titles($this->registerPosts()->indexLimit(2)->chunk(1)));
+
+        $plain = fn (): ModelSource => ModelSource::make(Post::class)
+            ->url(fn (Post $post): string => '/posts/'.$post->slug)
+            ->title(fn (Post $post): string => (string) $post->title_en);
+
+        config(['filament-seo-files.llms.index_limit' => 3]);
+        $this->assertSame(['D', 'C', 'B'], $titles($plain()));
+
+        $this->assertSame(['D', 'C', 'B', 'A'], $titles($plain()->indexLimit(null)));
+    }
+
     public function test_the_section_title_can_be_set(): void
     {
         $this->makePost('a', 'A');

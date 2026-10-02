@@ -6,6 +6,7 @@ namespace Asignua\FilamentSeoFiles\Http\Controllers;
 
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\LlmsFullTxtFile;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -23,6 +24,13 @@ class LlmsFullController
             throw new NotFoundHttpException;
         }
 
-        return response($file->read($locale), 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+        try {
+            $content = $file->serve($locale);
+        } catch (LockTimeoutException) {
+            // Another request is still building the file: ask the client to come back.
+            return response('', 503, ['Retry-After' => '30', 'Content-Type' => 'text/plain; charset=UTF-8']);
+        }
+
+        return response($content, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 }

@@ -52,6 +52,17 @@ class SitemapUrlRepository
     }
 
     /**
+     * Does another record already hold this (normalised) address in this language?
+     */
+    public function existsInLocale(string $locale, string $url, mixed $ignoreId = null): bool
+    {
+        return $this->query()
+            ->where('url->'.$locale, $url)
+            ->when($ignoreId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreId))
+            ->exists();
+    }
+
+    /**
      * Walks the active manual URLs in chunks by id.
      *
      * @param callable(Collection<int, SitemapUrl>): void $callback

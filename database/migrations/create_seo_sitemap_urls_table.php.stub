@@ -15,8 +15,9 @@ use Illuminate\Support\Facades\Schema;
  *
  * There is no unique index on `url` on purpose: MariaDB keeps json as longtext (a unique
  * index would need a prefix length) and has no functional indexes, and uniqueness here is
- * per language, not per row. Duplicates are caught by the form validation and by the map
- * of already emitted addresses in the sitemap generator.
+ * per language, not per row. Duplicates are caught by the form validation (pages the site
+ * owns and other manual records, per language) and by the map of already emitted addresses
+ * in the sitemap generator.
  */
 return new class extends Migration
 {

@@ -48,7 +48,7 @@ class LlmsTxt
 
     private static function renderLink(LlmsLink $link): string
     {
-        $line = '- ['.self::escape($link->title).']('.self::line($link->url).')';
+        $line = '- ['.self::escape($link->title).']('.self::url($link->url).')';
         $description = self::escape($link->description);
 
         return $description !== '' ? $line.': '.$description : $line;
@@ -60,6 +60,15 @@ class LlmsTxt
     private static function line(?string $value): string
     {
         return trim((string) preg_replace('/\s+/u', ' ', (string) $value));
+    }
+
+    /**
+     * A link destination: parentheses (wiki-style slugs), spaces and angle brackets would
+     * end or break `[title](url)`, so they are percent-encoded — the address stays the same.
+     */
+    private static function url(string $value): string
+    {
+        return str_replace(['(', ')', ' ', '<', '>'], ['%28', '%29', '%20', '%3C', '%3E'], self::line($value));
     }
 
     /**

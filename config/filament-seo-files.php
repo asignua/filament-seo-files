@@ -77,6 +77,11 @@ return [
 
         // The longest description of a link in llms.txt, in characters (ModelSource).
         'description_limit' => 200,
+
+        // The most records one ModelSource lists in llms.txt, newest first — the file is a
+        // short index, sitemap.xml has the complete list. null = every record.
+        // Override per source with ->indexLimit().
+        'index_limit' => 100,
     ],
 
     // Public routes.
@@ -85,6 +90,10 @@ return [
         // automatically. Turn this off on a site with a catch-all route and call
         // SeoFiles::routes() before that route instead.
         'register' => true,
+
+        // Middleware of those routes. Empty by default: the `web` group would start a
+        // session and set cookies on a plain text file, so a CDN could not cache it.
+        'middleware' => [],
     ],
 
     // Scheduled generation.

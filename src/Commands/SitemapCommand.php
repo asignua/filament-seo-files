@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Commands;
 
+use Asignua\FilamentSeoFiles\Commands\Concerns\DisplaysRelativePaths;
 use Asignua\FilamentSeoFiles\Support\SitemapGenerator;
 use Illuminate\Console\Command;
 
 class SitemapCommand extends Command
 {
+    use DisplaysRelativePaths;
+
     protected $signature = 'seo-files:sitemap';
 
     protected $description = 'Generate sitemap.xml from the registered sources and the manual URLs (hreflang + lastmod)';
@@ -29,12 +32,5 @@ class SitemapCommand extends Command
         }
 
         return self::SUCCESS;
-    }
-
-    private function relative(string $path): string
-    {
-        $public = public_path().'/';
-
-        return str_starts_with($path, $public) ? 'public/'.substr($path, strlen($public)) : $path;
     }
 }

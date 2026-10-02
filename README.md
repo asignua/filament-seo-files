@@ -92,8 +92,13 @@ Register the plugin in your panel provider to get the page and the resource:
 ```php
 use Asignua\FilamentSeoFiles\SeoFilesPlugin;
 
-$panel->plugin(SeoFilesPlugin::make());
+$panel->plugin(SeoFilesPlugin::make()
+    ->authorize(fn (): bool => auth()->user()?->isAdmin()));
 ```
+
+**Say who may use it.** Without `->authorize(...)` or a `seo-files.manage` gate nobody can open the page, the resource
+or the actions: they write `robots.txt` and the llms files into the web root, and one `Disallow: /` de-indexes the site.
+`->authorize(true)` lets in everyone who can enter the panel (see [Authorization](#authorization)).
 
 The package has two layers. The **registry** `SeoFiles` holds your sources and resolvers and works everywhere —
 console, scheduler, queue, routes — with or without a panel. The **plugin** `SeoFilesPlugin` only draws the panel UI.
@@ -146,7 +151,9 @@ What `ModelSource` does for you:
   call `->markdown()` when the body closure already returns Markdown;
 - a `url()` result that starts with `/` gets the base URL prepended, an absolute one is used as is;
 - `->locales(['en'])` restricts a source to some languages, `->chunk(500)` changes the chunk size, `->limit(200)` caps the
-  records in `llms-full.txt`, which carries whole page bodies.
+  records in `llms-full.txt`, which carries whole page bodies;
+- `llms.txt` is a short index, so a source lists at most `llms.index_limit` (100) records there, newest first by primary
+  key; `->indexLimit(20)` changes it per source, `->indexLimit(null)` lists every record. The sitemap is never limited.
 
 ## Multilingual sites
 
@@ -159,8 +166,10 @@ SeoFiles::locales(default: 'en', all: ['en', 'uk', 'de'], unprefixed: 'en');
 - When the languages live in a config that can change after boot (a CMS), use
   `SeoFiles::localesUsing(fn () => ['default' => …, 'all' => […], 'unprefixed' => …])`: it is resolved at the moment of use.
 
-For each page `ModelSource` asks your `url()` closure once per language, puts the default language into `<loc>` (or the
-first language that has a URL) and lists every language version as a reciprocal `hreflang` alternate, plus `x-default`.
+For each page `ModelSource` asks your `url()` closure once per language. Every language version becomes a `<url>` of its
+own, and each of them lists the full set of `hreflang` alternates (itself included) plus `x-default`, which points at the
+default language (or the first language that has a URL) — the reciprocal cluster Google's sitemap method expects.
+`hreflang` values are BCP 47: a `pt_BR` site language is written as `pt-BR`.
 
 Four more resolvers adapt the plugin to how your site builds URLs and names itself:
 
@@ -225,8 +234,9 @@ resource (the migration above creates its table). One record is one multilingual
 
 - the value is a **path from the site root without the language prefix** (`search`) — the plugin adds the host and the
   `/{locale}/` prefix — or a full `https://…` address, used as is;
-- the form rejects spaces, invalid addresses, `ftp://` and `//host`, the root path, paths that start with a language
-  prefix, and paths your site already owns;
+- the form rejects spaces, invalid addresses, `ftp://` and `//host`, paths that start with a language prefix, paths your
+  site already owns, and an address another manual record already has in that language. The root path `/` is accepted
+  (it is the home page of each language) unless `ownedPathUsing` says the site owns `''`;
 - tell the plugin what the site owns, so a manual URL can never duplicate a real page:
 
 ```php
@@ -291,8 +301,13 @@ of every page, separated by `---`. One pair per language:
 Prefixed languages are served at `/{locale}/llms.txt` and `/{locale}/llms-full.txt` by **routes**, which the package
 registers for you. They are not static files because a real `public/{locale}/` directory would shadow your
 `/{locale}/` home page (`php artisan serve` and nginx's `try_files $uri $uri/` would serve the directory). The leading
-dot of `.llms` also keeps nginx from serving the stored files directly. A language that has no stored file yet is served
-a freshly built template.
+dot of `.llms` also keeps nginx from serving the stored files directly. When a language has no stored file yet, the
+first request builds it once and stores it (behind a cache lock; a request that waits too long gets `503` with
+`Retry-After`), and every later request reads the file — an anonymous visitor can never make the server rebuild the
+document per request. Run `seo-files:llms` to refresh the files.
+
+The routes carry no middleware by default (`routes.middleware`): the `web` group would start a session and set a cookie
+on a plain text file, which keeps a CDN from caching it.
 
 **Sites with a catch-all route** must register the routes *before* it, otherwise the catch-all swallows both URLs:
 
@@ -330,8 +345,9 @@ Add your own tasks with a plain `withSchedule()`; the registrations add up.
 
 ## Authorization
 
-By default everyone who can enter the panel can open the page and the resource — unless a `seo-files.manage` gate is
-defined, in which case the gate decides. Or pass a closure:
+The plugin fails closed: unless you pass a closure or define a `seo-files.manage` gate, **nobody** can open the page, the
+resource or the actions. Pass a closure (it wins over the gate), define the gate, or call `->authorize(true)` to allow
+everyone who can enter the panel:
 
 ```php
 $panel->plugin(SeoFilesPlugin::make()
@@ -370,14 +386,19 @@ public function generateLlmsAction(): Action { return GenerateLlmsAction::make()
 public function editLlmsAction(): Action { return EditLlmsAction::make(); }
 ```
 
-Render each with `{{ $this->generateSitemapAction }}` and keep `<x-filament-actions::modals />` on the page. The actions do
-not check authorization themselves — the page that hosts them does.
+Render each with `{{ $this->generateSitemapAction }}` and keep `<x-filament-actions::modals />` on the page. Each action
+carries the plugin's policy (`SeoFilesPlugin::allows()`) itself, so a host page with weaker access cannot open a back
+door: an unauthorized user does not see the buttons.
+
+The generate actions run the command inside the request (with PHP's time limit lifted for it). On a very large site a
+proxy timeout can still cut it short — schedule the commands there instead. The llms "Generate" confirmation warns that
+editor changes are replaced, and with the schedule on both llms actions name the time of the nightly rewrite.
 
 ## Configuration
 
 `config/filament-seo-files.php` — tables, models, the sitemap/robots/llms paths (all default to `public_path()`
-and are resolved at run time), the sitemap index limits, `routes.register`, the schedule and the `llms` description
-limit. Closures (sources, base URL, languages) cannot live in a cacheable config file and are set on the `SeoFiles`
+and are resolved at run time), the sitemap index limits, `routes.register` and `routes.middleware`, the schedule, and
+the `llms` description and index limits. Closures (sources, base URL, languages) cannot live in a cacheable config file and are set on the `SeoFiles`
 registry instead.
 
 `SeoFiles::flush()` forgets everything configured on the registry — handy in tests.

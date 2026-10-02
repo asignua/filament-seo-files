@@ -75,6 +75,10 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
 
     private ?int $limit = null;
 
+    private ?int $indexLimit = null;
+
+    private bool $indexLimitSet = false;
+
     /**
      * @param class-string<TModel> $model
      */
@@ -215,11 +219,24 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
 
     /**
      * At most this many records in llms-full.txt, which carries whole page bodies
-     * (the sitemap and the llms.txt index are not limited).
+     * (the sitemap is not limited; the llms.txt index has {@see indexLimit()}).
      */
     public function limit(?int $limit): static
     {
         $this->limit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * At most this many records in the llms.txt index, NEWEST first (by primary key):
+     * llms.txt is a short curated index, the complete list is what sitemap.xml is for.
+     * Default: `filament-seo-files.llms.index_limit` (100); `null` lists every record.
+     */
+    public function indexLimit(?int $limit): static
+    {
+        $this->indexLimit = $limit;
+        $this->indexLimitSet = true;
 
         return $this;
     }
@@ -253,8 +270,13 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
     public function llmsSections(string $locale): iterable
     {
         $links = [];
+        $limit = $this->resolvedIndexLimit();
 
-        foreach ($this->records() as $record) {
+        foreach ($this->records(newestFirst: true) as $record) {
+            if ($limit !== null && count($links) >= $limit) {
+                break;
+            }
+
             $url = $this->urlFor($record, $locale);
 
             if ($url === null) {
@@ -292,12 +314,23 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
         }
     }
 
+    private function resolvedIndexLimit(): ?int
+    {
+        if ($this->indexLimitSet) {
+            return $this->indexLimit === null ? null : max(0, $this->indexLimit);
+        }
+
+        $configured = config('filament-seo-files.llms.index_limit', 100);
+
+        return $configured === null ? null : max(0, (int) $configured);
+    }
+
     /**
-     * The records in primary-key order, one chunk per query.
+     * The records in primary-key order (descending with `$newestFirst`), one chunk per query.
      *
      * @return Generator<int, TModel>
      */
-    private function records(): Generator
+    private function records(bool $newestFirst = false): Generator
     {
         $instance = new $this->model;
         $key = $instance->getKeyName();
@@ -314,8 +347,11 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
         do {
             // Keyset pagination by the primary key: it re-orders the query, so the records
             // come in key order whatever ordering the `query()` callback asked for.
+            $page = (clone $base)->reorder();
             /** @var Collection<int, TModel> $records */
-            $records = (clone $base)->reorder()->forPageAfterId($this->chunk, $lastId, $key)->get();
+            $records = ($newestFirst
+                ? $page->forPageBeforeId($this->chunk, $lastId, $key)
+                : $page->forPageAfterId($this->chunk, $lastId, $key))->get();
 
             foreach ($records as $record) {
                 yield $record;

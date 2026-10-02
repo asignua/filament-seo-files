@@ -13,6 +13,9 @@ use Workbench\App\Models\Post;
 
 /**
  * Large sites: above `sitemap.max_urls` sitemap.xml becomes a <sitemapindex> of parts.
+ *
+ * Every page here has two languages, i.e. TWO <url> elements (one per language version),
+ * so `max_urls` of 6 holds three pages.
  */
 class SitemapIndexTest extends TestCase
 {
@@ -44,9 +47,9 @@ class SitemapIndexTest extends TestCase
         return array_values(array_diff(scandir($this->publicPath) ?: [], ['.', '..']));
     }
 
-    public function test_seven_urls_with_a_limit_of_three_give_an_index_and_three_parts(): void
+    public function test_seven_pages_with_a_limit_of_six_urls_give_an_index_and_three_parts(): void
     {
-        config(['filament-seo-files.sitemap.max_urls' => 3]);
+        config(['filament-seo-files.sitemap.max_urls' => 6]);
         $this->posts(7);
 
         $this->artisan('seo-files:sitemap')
@@ -61,15 +64,15 @@ class SitemapIndexTest extends TestCase
         $this->assertStringContainsString('<loc>https://site.test/sitemap-3.xml</loc>', $index);
         $this->assertStringContainsString('<lastmod>', $index);
 
-        $this->assertSame(3, substr_count($this->part(1), '<url>'));
-        $this->assertSame(3, substr_count($this->part(2), '<url>'));
-        $this->assertSame(1, substr_count($this->part(3), '<url>'));
+        $this->assertSame(6, substr_count($this->part(1), '<url>'));
+        $this->assertSame(6, substr_count($this->part(2), '<url>'));
+        $this->assertSame(2, substr_count($this->part(3), '<url>'));
         $this->assertSame(['sitemap-1.xml', 'sitemap-2.xml', 'sitemap-3.xml', 'sitemap.xml'], $this->files());
     }
 
     public function test_no_address_is_repeated_across_parts_and_a_cluster_stays_in_one_part(): void
     {
-        config(['filament-seo-files.sitemap.max_urls' => 3]);
+        config(['filament-seo-files.sitemap.max_urls' => 6]);
         $this->posts(5);
         // A manual record that duplicates the 4th page lives in the sources pass already.
         $this->manualUrl(['en' => 'posts/post-4']);
@@ -99,7 +102,7 @@ class SitemapIndexTest extends TestCase
 
     public function test_going_back_to_a_single_file_removes_the_parts(): void
     {
-        config(['filament-seo-files.sitemap.max_urls' => 3]);
+        config(['filament-seo-files.sitemap.max_urls' => 6]);
         $this->posts(7);
         $this->artisan('seo-files:sitemap')->assertExitCode(0);
         $this->assertFileExists($this->publicPath.'/sitemap-3.xml');
@@ -108,13 +111,13 @@ class SitemapIndexTest extends TestCase
         $this->artisan('seo-files:sitemap')->assertExitCode(0);
 
         $this->assertStringNotContainsString('<sitemapindex', $this->sitemapXml());
-        $this->assertSame(2, substr_count($this->sitemapXml(), '<url>'));
+        $this->assertSame(4, substr_count($this->sitemapXml(), '<url>'));
         $this->assertSame(['sitemap.xml'], $this->files());
     }
 
     public function test_fewer_parts_than_before_removes_only_the_stale_ones(): void
     {
-        config(['filament-seo-files.sitemap.max_urls' => 3]);
+        config(['filament-seo-files.sitemap.max_urls' => 6]);
         $this->posts(7);
         $this->artisan('seo-files:sitemap')->assertExitCode(0);
 
@@ -138,7 +141,7 @@ class SitemapIndexTest extends TestCase
 
         $this->artisan('seo-files:sitemap')->assertExitCode(0);
 
-        $this->assertSame(7, substr_count($this->sitemapXml(), '<url>'));
+        $this->assertSame(14, substr_count($this->sitemapXml(), '<url>'));
         $this->assertStringNotContainsString('<sitemapindex', $this->sitemapXml());
         $this->assertSame(['sitemap.xml'], $this->files());
     }
@@ -151,7 +154,7 @@ class SitemapIndexTest extends TestCase
         $this->artisan('seo-files:sitemap')->assertExitCode(0);
 
         $this->assertStringContainsString('<sitemapindex', $this->sitemapXml());
-        $this->assertSame(2, substr_count($this->part(1), '<url>'));
+        $this->assertSame(4, substr_count($this->part(1), '<url>'));
         $this->assertSame(['sitemap-1.xml', 'sitemap.xml'], $this->files());
     }
 
@@ -174,7 +177,7 @@ class SitemapIndexTest extends TestCase
 
         $this->assertStringContainsString('<sitemapindex', $this->sitemapXml());
         $this->assertGreaterThan(1, substr_count($this->sitemapXml(), '<sitemap>'));
-        $this->assertSame(6, (new SitemapFile)->urlCount());
+        $this->assertSame(12, (new SitemapFile)->urlCount());
     }
 
     public function test_the_part_name_template_is_configurable(): void
@@ -201,15 +204,28 @@ class SitemapIndexTest extends TestCase
 
     public function test_the_file_helper_counts_urls_across_parts(): void
     {
-        config(['filament-seo-files.sitemap.max_urls' => 3]);
+        config(['filament-seo-files.sitemap.max_urls' => 6]);
         $this->posts(7);
         $this->artisan('seo-files:sitemap')->assertExitCode(0);
 
         $file = new SitemapFile;
 
         $this->assertTrue($file->isIndex());
-        $this->assertSame(7, $file->urlCount());
+        $this->assertSame(14, $file->urlCount());
         $this->assertCount(3, $file->chunkFiles());
+    }
+
+    public function test_the_index_marker_is_found_without_reading_the_whole_file(): void
+    {
+        // A single sitemap padded far past the head: isIndex() must look at the root
+        // element only, so a <sitemapindex> string deep inside a <loc> is not a marker.
+        File::put($this->publicPath.'/sitemap.xml', '<?xml version="1.0"?><urlset>'.str_repeat(' ', 8192).'<sitemapindex</urlset>');
+
+        $this->assertFalse((new SitemapFile)->isIndex());
+
+        File::put($this->publicPath.'/sitemap.xml', '<?xml version="1.0"?><sitemapindex></sitemapindex>');
+
+        $this->assertTrue((new SitemapFile)->isIndex());
     }
 
     public function test_the_index_is_written_after_its_parts_so_it_never_points_at_missing_files(): void

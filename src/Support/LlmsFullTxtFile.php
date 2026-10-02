@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Asignua\FilamentSeoFiles\Support;
 
 use Asignua\FilamentSeoFiles\SeoFiles;
+use Asignua\FilamentSeoFiles\Support\Concerns\GeneratesOnDemand;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\File;
  */
 class LlmsFullTxtFile
 {
+    use GeneratesOnDemand;
+
     public function path(string $locale): string
     {
         return LlmsPaths::for('full', $locale);
@@ -32,8 +35,7 @@ class LlmsFullTxtFile
     {
         $path = $this->path($locale);
 
-        File::ensureDirectoryExists(dirname($path));
-        File::put($path, rtrim($content)."\n");
+        AtomicFile::put($path, rtrim($content)."\n");
     }
 
     public function template(string $locale): string

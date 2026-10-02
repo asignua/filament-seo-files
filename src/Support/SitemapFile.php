@@ -110,9 +110,26 @@ class SitemapFile
         return array_sum(array_map($this->countIn(...), $this->chunkFiles()));
     }
 
+    /**
+     * The root element sits in the first few hundred bytes: read the head of the file, not
+     * the whole of it (a single sitemap can be 50 MB).
+     */
     public function isIndex(): bool
     {
-        return $this->exists() && $this->countIn($this->path(), '<sitemapindex') > 0;
+        if (!$this->exists()) {
+            return false;
+        }
+
+        $handle = fopen($this->path(), 'rb');
+
+        if ($handle === false) {
+            return false;
+        }
+
+        $head = (string) fread($handle, 4096);
+        fclose($handle);
+
+        return str_contains($head, '<sitemapindex');
     }
 
     /**

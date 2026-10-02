@@ -18,6 +18,14 @@ trait RunsArtisan
      */
     protected function runCommand(string $command, array $parameters = []): void
     {
+        // The command runs inside the Livewire request. On a large site (a sitemap index, an
+        // llms-full.txt with a Markdown conversion per record) it can outlive PHP's
+        // max_execution_time; lift it for this request. A proxy timeout still applies —
+        // schedule the commands for sites that big.
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+
         try {
             Artisan::call($command, $parameters);
             $output = trim(Artisan::output());

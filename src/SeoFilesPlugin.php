@@ -61,10 +61,12 @@ class SeoFilesPlugin implements Plugin
     }
 
     /**
-     * Who may open the page and the resource. Default: the `seo-files.manage` gate when it
-     * is defined, otherwise everyone who can enter the panel.
+     * Who may open the page, the resource and the actions. Default: the `seo-files.manage`
+     * gate when it is defined, otherwise NOBODY — the plugin writes robots.txt and the llms
+     * files into the web root, so a panel with several roles must decide who may do that.
+     * `->authorize(true)` allows everyone who can enter the panel; `null` restores the default.
      */
-    public function authorize(bool|Closure $callback): static
+    public function authorize(bool|Closure|null $callback): static
     {
         $this->authorize = $callback;
 
@@ -145,7 +147,8 @@ class SeoFilesPlugin implements Plugin
             return (bool) value($this->authorize);
         }
 
-        return !Gate::has(self::GATE) || Gate::allows(self::GATE);
+        // Fail closed: without a closure and without the gate nobody is allowed.
+        return Gate::has(self::GATE) && Gate::allows(self::GATE);
     }
 
     public function register(Panel $panel): void

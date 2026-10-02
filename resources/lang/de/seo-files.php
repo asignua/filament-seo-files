@@ -7,7 +7,6 @@ return [
         'sitemap_description' => 'Vollständige Liste der Website-URLs',
     ],
     'actions' => [
-        'run' => 'Ausführen',
         'generate' => 'Generieren',
         'edit' => 'Bearbeiten',
         'edit_file' => ':file bearbeiten',
@@ -16,6 +15,8 @@ return [
         'saved' => 'Gespeichert',
         'finished' => 'Befehl ausgeführt',
         'failed' => 'Befehl fehlgeschlagen',
+        'generate_llms_warning' => 'llms.txt und llms-full.txt werden für jede Sprache neu aus den Quellen erstellt. Änderungen im Editor werden ersetzt.',
+        'scheduled_overwrite' => 'Die Dateien werden außerdem täglich um :time neu erstellt; dabei werden hier vorgenommene Änderungen ersetzt.',
     ],
     'fields' => [
         'language' => 'Sprache',
@@ -37,9 +38,9 @@ return [
         'spaces' => 'Die Adresse darf keine Leerzeichen enthalten.',
         'invalid' => 'Ungültige Adresse.',
         'scheme_or_path' => 'Geben Sie eine vollständige Adresse mit Schema oder einen Pfad ohne Schema ein.',
-        'home' => 'Die Startseite ist bereits in der Sitemap.',
         'language_prefix' => 'Fügen Sie kein Sprachpräfix hinzu, es wird automatisch ergänzt.',
         'owned' => 'Diese Adresse gehört bereits zu einer Seite der Website.',
+        'duplicate' => 'Eine andere manuelle URL hat diese Adresse in dieser Sprache bereits.',
     ],
     'page' => [
         'navigation' => 'SEO-Dateien',

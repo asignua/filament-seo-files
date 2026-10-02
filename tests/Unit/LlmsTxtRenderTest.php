@@ -94,6 +94,18 @@ class LlmsTxtRenderTest extends TestCase
         $this->assertStringContainsString('- [Grants \[2026\] (new)](https://example.com/a): Text \[with\] brackets', $txt);
     }
 
+    public function test_parentheses_and_spaces_in_a_url_do_not_break_the_link(): void
+    {
+        // Wiki-style slugs carry parentheses; `)` would end the link destination early.
+        $sections = [new LlmsSection('S', [
+            new LlmsLink('Mercury', 'https://example.com/wiki/Mercury_(planet)', null),
+        ])];
+
+        $txt = LlmsTxt::render('T', null, $sections);
+
+        $this->assertStringContainsString('- [Mercury](https://example.com/wiki/Mercury_%28planet%29)', $txt);
+    }
+
     public function test_collapses_newlines_inside_item_fields(): void
     {
         // A list item is exactly one line, otherwise the document falls apart.

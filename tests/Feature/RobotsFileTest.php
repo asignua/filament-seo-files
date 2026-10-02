@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Asignua\FilamentSeoFiles\Tests\Feature;
 
 use Asignua\FilamentSeoFiles\SeoFiles;
+use Asignua\FilamentSeoFiles\Support\LlmsFullTxtFile;
+use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
 use Asignua\FilamentSeoFiles\Support\RobotsFile;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
 use Illuminate\Support\Facades\File;
@@ -60,5 +62,19 @@ class RobotsFileTest extends TestCase
 
         $this->assertFileExists($this->publicPath.'/custom/robots.txt');
         $this->assertFileDoesNotExist($this->publicPath.'/robots.txt');
+    }
+
+    public function test_writes_go_through_a_temporary_file_and_leave_nothing_behind(): void
+    {
+        // Written in place, a crawler could read a truncated robots.txt mid-write; the
+        // writers rename a finished temporary file over the target instead.
+        File::put(public_path('robots.txt'), 'old');
+
+        (new RobotsFile)->write('User-agent: *');
+        (new LlmsTxtFile)->write('en', '# Index');
+        (new LlmsFullTxtFile)->write('en', '# Full');
+
+        $this->assertSame(['llms-full.txt', 'llms.txt', 'robots.txt'], array_values(array_diff(scandir($this->publicPath) ?: [], ['.', '..'])));
+        $this->assertSame("User-agent: *\n", File::get(public_path('robots.txt')));
     }
 }

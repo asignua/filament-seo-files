@@ -7,7 +7,6 @@ return [
         'sitemap_description' => 'Volledige lijst van de URL’s van de site',
     ],
     'actions' => [
-        'run' => 'Uitvoeren',
         'generate' => 'Genereren',
         'edit' => 'Bewerken',
         'edit_file' => ':file bewerken',
@@ -16,6 +15,8 @@ return [
         'saved' => 'Opgeslagen',
         'finished' => 'Opdracht uitgevoerd',
         'failed' => 'Opdracht mislukt',
+        'generate_llms_warning' => 'llms.txt en llms-full.txt worden voor elke taal opnieuw opgebouwd uit de bronnen. Wijzigingen in de editor worden vervangen.',
+        'scheduled_overwrite' => 'De bestanden worden ook dagelijks om :time opnieuw opgebouwd, waarbij wijzigingen hier worden vervangen.',
     ],
     'fields' => [
         'language' => 'Taal',
@@ -37,9 +38,9 @@ return [
         'spaces' => 'Het adres mag geen spaties bevatten.',
         'invalid' => 'Ongeldig adres.',
         'scheme_or_path' => 'Voer een volledig adres met schema in of een pad zonder schema.',
-        'home' => 'De homepage staat al in de sitemap.',
         'language_prefix' => 'Voeg geen taalvoorvoegsel toe, het wordt automatisch toegevoegd.',
         'owned' => 'Dit adres hoort al bij een pagina van de site.',
+        'duplicate' => 'Een andere handmatige URL heeft dit adres al in deze taal.',
     ],
     'page' => [
         'navigation' => 'SEO-bestanden',

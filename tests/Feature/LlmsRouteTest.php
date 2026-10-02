@@ -30,7 +30,7 @@ class LlmsRouteTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
-        // Even before the first generation the route serves a freshly built template.
+        // Even before the first generation the route serves the document (built once).
         $response->assertSee('Альфа', escape: false);
     }
 
@@ -41,6 +41,30 @@ class LlmsRouteTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
         $response->assertSee('Текст', escape: false);
+    }
+
+    public function test_a_missing_file_is_built_once_and_stored(): void
+    {
+        // Building walks every source (the whole table for a ModelSource): an anonymous
+        // request must not be able to make the server do that over and over.
+        $this->get('/uk/llms-full.txt')->assertOk()->assertSee('Текст', escape: false);
+        $this->assertFileExists(public_path('.llms/uk-full.txt'));
+
+        // A record added afterwards does not show up until the next generation: the
+        // second request read the stored file instead of rebuilding the document.
+        $this->makePost('b', 'Beta', 'Бета', ['body_uk' => '<p>Новий</p>']);
+
+        $this->get('/uk/llms-full.txt')->assertOk()->assertDontSee('Новий', escape: false);
+
+        $this->get('/uk/llms.txt')->assertOk();
+        $this->assertFileExists(public_path('.llms/uk.txt'));
+    }
+
+    public function test_the_routes_start_no_session(): void
+    {
+        // A plain text file needs no session or cookies, and a cookie keeps a CDN from
+        // caching the response.
+        $this->get('/uk/llms.txt')->assertOk()->assertCookieMissing(config('session.cookie'));
     }
 
     public function test_a_stored_file_wins_over_the_template(): void

@@ -33,6 +33,54 @@ class SitemapCommandTest extends TestCase
         $this->assertStringContainsString('<lastmod>', $xml);
     }
 
+    public function test_every_language_version_is_a_url_of_its_own_with_the_full_cluster(): void
+    {
+        // Google's sitemap hreflang method: each version is declared as a <loc>, and each
+        // <url> lists every alternate including itself, so the cluster is reciprocal.
+        $this->makePost('hello', 'Hello', 'Привіт');
+        $this->manualUrl(['en' => 'search', 'uk' => 'poshuk']);
+
+        $this->artisan('seo-files:sitemap')->assertExitCode(0);
+
+        preg_match_all('~<url>.*?</url>~s', $this->sitemapXml(), $blocks);
+        $this->assertCount(4, $blocks[0]);
+
+        $byLoc = [];
+
+        foreach ($blocks[0] as $block) {
+            preg_match('~<loc>([^<]+)</loc>~', $block, $loc);
+            $byLoc[$loc[1]] = $block;
+        }
+
+        foreach (['https://site.test/posts/hello', 'https://site.test/uk/posts/hello'] as $loc) {
+            $this->assertArrayHasKey($loc, $byLoc);
+            $this->assertStringContainsString('hreflang="en" href="https://site.test/posts/hello"', $byLoc[$loc]);
+            $this->assertStringContainsString('hreflang="uk" href="https://site.test/uk/posts/hello"', $byLoc[$loc]);
+            $this->assertStringContainsString('hreflang="x-default" href="https://site.test/posts/hello"', $byLoc[$loc]);
+        }
+
+        foreach (['https://site.test/search', 'https://site.test/uk/poshuk'] as $loc) {
+            $this->assertArrayHasKey($loc, $byLoc);
+            $this->assertStringContainsString('hreflang="uk" href="https://site.test/uk/poshuk"', $byLoc[$loc]);
+            $this->assertStringContainsString('hreflang="x-default" href="https://site.test/search"', $byLoc[$loc]);
+        }
+    }
+
+    public function test_hreflang_uses_bcp_47_codes(): void
+    {
+        // Laravel's `pt_BR` is not a valid hreflang; Google ignores the annotation.
+        SeoFiles::flush();
+        SeoFiles::locales(default: 'en', all: ['en', 'pt_BR'], unprefixed: 'en');
+        $this->manualUrl(['en' => 'search', 'pt_BR' => 'busca']);
+
+        $this->artisan('seo-files:sitemap')->assertExitCode(0);
+
+        $xml = $this->sitemapXml();
+
+        $this->assertStringContainsString('hreflang="pt-BR" href="https://site.test/pt_BR/busca"', $xml);
+        $this->assertStringNotContainsString('hreflang="pt_BR"', $xml);
+    }
+
     public function test_it_never_emits_priority_or_changefreq(): void
     {
         $this->makePost('hello', 'Hello', 'Привіт');
@@ -171,7 +219,13 @@ class SitemapCommandTest extends TestCase
 
         // The page's uk URL is https://site.test/uk/posts/hello; the manual uk version is
         // https://site.test/uk/posts/hello too (prefix + path) — and appears only under the page.
-        $this->assertSame(1, substr_count($this->sitemapXml(), 'href="https://site.test/uk/posts/hello"'));
+        preg_match_all('~<url>.*?</url>~s', $this->sitemapXml(), $blocks);
+
+        $landing = array_values(array_filter($blocks[0], fn (string $block): bool => str_contains($block, '<loc>https://site.test/landing</loc>')));
+
+        $this->assertCount(1, $landing);
+        $this->assertStringNotContainsString('https://site.test/uk/posts/hello', $landing[0]);
+        $this->assertSame(1, substr_count($this->sitemapXml(), '<loc>https://site.test/uk/posts/hello</loc>'));
     }
 
     public function test_a_manual_url_with_an_empty_default_language_falls_back_to_the_first_filled_one(): void

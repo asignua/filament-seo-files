@@ -96,8 +96,9 @@ class SeoFilesPage extends Page
     {
         $sitemap = new SitemapFile;
         $generatedAt = $sitemap->generatedAt();
-        $urls = $sitemap->urlCount();
-        $parts = $sitemap->isIndex() ? count($sitemap->chunkFiles()) : 0;
+        // Counted only when there is a file: urlCount() reads it whole.
+        $urls = $generatedAt !== null ? $sitemap->urlCount() : null;
+        $parts = $generatedAt !== null && $sitemap->isIndex() ? count($sitemap->chunkFiles()) : 0;
 
         return [
             [

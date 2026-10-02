@@ -19,10 +19,17 @@ class LlmsFull
      */
     public static function entry(string $title, string $url, string $bodyMarkdown): string
     {
-        $head = "# {$title}\nSource: {$url}";
+        // A heading and the source line are one line each: a line break in the title would
+        // push its tail out of the `# Title` heading and break the entry header.
+        $head = '# '.self::line($title)."\nSource: ".self::line($url);
         $body = trim($bodyMarkdown);
 
         return $body === '' ? $head : "{$head}\n\n{$body}";
+    }
+
+    private static function line(string $value): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $value));
     }
 
     public static function entryFor(LlmsDocument $document): string

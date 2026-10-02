@@ -7,7 +7,6 @@ return [
         'sitemap_description' => 'Pełna lista adresów URL witryny',
     ],
     'actions' => [
-        'run' => 'Uruchom',
         'generate' => 'Wygeneruj',
         'edit' => 'Edytuj',
         'edit_file' => 'Edytuj :file',
@@ -16,6 +15,8 @@ return [
         'saved' => 'Zapisano',
         'finished' => 'Polecenie wykonane',
         'failed' => 'Polecenie zakończyło się błędem',
+        'generate_llms_warning' => 'Pliki llms.txt i llms-full.txt wszystkich języków zostaną zbudowane od nowa ze źródeł. Zmiany wprowadzone w edytorze zostaną zastąpione.',
+        'scheduled_overwrite' => 'Pliki są też budowane od nowa codziennie o :time, co zastępuje zmiany wprowadzone tutaj.',
     ],
     'fields' => [
         'language' => 'Język',
@@ -37,9 +38,9 @@ return [
         'spaces' => 'Adres nie może zawierać spacji.',
         'invalid' => 'Nieprawidłowy adres.',
         'scheme_or_path' => 'Podaj pełny adres ze schematem albo ścieżkę bez schematu.',
-        'home' => 'Strona główna jest już w mapie witryny.',
         'language_prefix' => 'Nie dodawaj prefiksu języka, jest dodawany automatycznie.',
         'owned' => 'Ten adres należy już do strony witryny.',
+        'duplicate' => 'Inny ręczny adres URL ma już ten adres w tym języku.',
     ],
     'page' => [
         'navigation' => 'Pliki SEO',

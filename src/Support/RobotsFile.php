@@ -27,8 +27,7 @@ class RobotsFile
 
     public function write(string $content): void
     {
-        File::ensureDirectoryExists(dirname($this->path()));
-        File::put($this->path(), rtrim($content)."\n");
+        AtomicFile::put($this->path(), rtrim($content)."\n");
     }
 
     public function template(): string

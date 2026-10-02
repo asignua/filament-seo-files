@@ -6,6 +6,7 @@ namespace Asignua\FilamentSeoFiles\Tests\Feature;
 
 use Asignua\FilamentSeoFiles\Pages\SeoFilesPage;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
@@ -94,6 +95,37 @@ class SeoFilesPageTest extends TestCase
 
         $this->assertSame("# Hand made uk\n", File::get(public_path('.llms/uk.txt')));
         $this->assertFileDoesNotExist(public_path('llms.txt'));
+    }
+
+    public function test_a_large_generated_llms_txt_can_be_saved_unchanged(): void
+    {
+        // A generated index of a large site must not trip the editor's length limit.
+        $large = '# Big'."\n\n".str_repeat("- [Page](https://site.test/page)\n", 3000);
+        $this->assertGreaterThan(50000, strlen($large));
+
+        Livewire::test(SeoFilesPage::class)
+            ->callAction('editLlms', ['locale' => 'en', 'llms' => $large])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame(rtrim($large)."\n", File::get(public_path('llms.txt')));
+    }
+
+    public function test_generating_llms_warns_that_editor_changes_are_replaced(): void
+    {
+        Livewire::test(SeoFilesPage::class)
+            ->assertActionExists('generateLlms', fn (Action $action): bool => $action->getModalDescription()
+                === __('filament-seo-files::seo-files.actions.generate_llms_warning'))
+            ->assertActionExists('editLlms', fn (Action $action): bool => $action->getModalDescription() === null);
+    }
+
+    public function test_with_the_schedule_on_both_llms_actions_name_the_nightly_overwrite(): void
+    {
+        config(['filament-seo-files.schedule.enabled' => true, 'filament-seo-files.schedule.times.llms' => '03:15']);
+        $note = __('filament-seo-files::seo-files.actions.scheduled_overwrite', ['time' => '03:15']);
+
+        Livewire::test(SeoFilesPage::class)
+            ->assertActionExists('generateLlms', fn (Action $action): bool => str_ends_with((string) $action->getModalDescription(), ' '.$note))
+            ->assertActionExists('editLlms', fn (Action $action): bool => $action->getModalDescription() === $note);
     }
 
     public function test_the_llms_editor_requires_text(): void

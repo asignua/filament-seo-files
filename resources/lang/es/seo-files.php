@@ -7,7 +7,6 @@ return [
         'sitemap_description' => 'Lista completa de las URL del sitio',
     ],
     'actions' => [
-        'run' => 'Ejecutar',
         'generate' => 'Generar',
         'edit' => 'Editar',
         'edit_file' => 'Editar :file',
@@ -16,6 +15,8 @@ return [
         'saved' => 'Guardado',
         'finished' => 'Comando ejecutado',
         'failed' => 'El comando ha fallado',
+        'generate_llms_warning' => 'Se regenerarán llms.txt y llms-full.txt de todos los idiomas a partir de las fuentes. Los cambios hechos en el editor se reemplazarán.',
+        'scheduled_overwrite' => 'Los archivos también se regeneran cada día a las :time, lo que reemplaza los cambios hechos aquí.',
     ],
     'fields' => [
         'language' => 'Idioma',
@@ -37,9 +38,9 @@ return [
         'spaces' => 'La dirección no puede contener espacios.',
         'invalid' => 'Dirección no válida.',
         'scheme_or_path' => 'Introduzca una dirección completa con esquema o una ruta sin él.',
-        'home' => 'La página de inicio ya está en el sitemap.',
         'language_prefix' => 'No añada el prefijo de idioma, se añade automáticamente.',
         'owned' => 'Esta dirección ya pertenece a una página del sitio.',
+        'duplicate' => 'Otra URL manual ya tiene esta dirección en este idioma.',
     ],
     'page' => [
         'navigation' => 'Archivos SEO',

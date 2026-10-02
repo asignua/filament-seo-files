@@ -56,7 +56,6 @@ class SitemapUrlResourceTest extends TestCase
             'invalid absolute URL' => ['https://', 'filament-seo-files::seo-files.validation.invalid'],
             'non-http scheme' => ['ftp://x.org/a', 'filament-seo-files::seo-files.validation.scheme_or_path'],
             'protocol-relative' => ['//x.org/a', 'filament-seo-files::seo-files.validation.scheme_or_path'],
-            'the root' => ['/', 'filament-seo-files::seo-files.validation.home'],
             'language prefix' => ['uk/katalog', 'filament-seo-files::seo-files.validation.language_prefix'],
             'owned path' => ['/about/', 'filament-seo-files::seo-files.validation.owned'],
         ];
@@ -70,6 +69,62 @@ class SitemapUrlResourceTest extends TestCase
 
             $this->assertSame(0, SitemapUrl::query()->count(), $label);
         }
+    }
+
+    public function test_the_root_path_can_be_added_when_the_site_does_not_own_it(): void
+    {
+        // The home page is in the sitemap only when a source emits it; until then a manual
+        // record is the way to list it.
+        Livewire::test(CreateSitemapUrl::class)
+            ->fillForm(['url' => ['en' => '/', 'uk' => '/']])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(['en' => '/', 'uk' => '/'], SitemapUrl::query()->firstOrFail()->url);
+
+        $this->artisan('seo-files:sitemap')->assertExitCode(0);
+        $xml = (string) file_get_contents($this->publicPath.'/sitemap.xml');
+
+        $this->assertStringContainsString('<loc>https://site.test</loc>', $xml);
+        $this->assertStringContainsString('<loc>https://site.test/uk</loc>', $xml);
+    }
+
+    public function test_the_root_path_is_rejected_when_the_site_owns_it(): void
+    {
+        SeoFiles::ownedPathUsing(fn (string $locale, string $path): bool => $path === '');
+
+        Livewire::test(CreateSitemapUrl::class)
+            ->fillForm(['url' => ['en' => '/', 'uk' => '']])
+            ->call('create')
+            ->assertHasFormErrors(['url.en'])
+            ->assertSee(__('filament-seo-files::seo-files.validation.owned'));
+
+        $this->assertSame(0, SitemapUrl::query()->count());
+    }
+
+    public function test_a_second_record_with_the_same_address_in_a_language_is_rejected(): void
+    {
+        $existing = app(SitemapUrlRepository::class)->create(['url' => ['en' => 'search', 'uk' => 'poshuk']]);
+
+        Livewire::test(CreateSitemapUrl::class)
+            ->fillForm(['url' => ['en' => '/search/', 'uk' => '']])
+            ->call('create')
+            ->assertHasFormErrors(['url.en'])
+            ->assertSee(__('filament-seo-files::seo-files.validation.duplicate'));
+
+        // The same address in ANOTHER language is not a duplicate.
+        Livewire::test(CreateSitemapUrl::class)
+            ->fillForm(['url' => ['en' => 'poshuk', 'uk' => '']])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        // A record does not collide with itself on edit.
+        Livewire::test(EditSitemapUrl::class, ['record' => $existing->getKey()])
+            ->fillForm(['url' => ['en' => 'search', 'uk' => 'poshuk']])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(2, SitemapUrl::query()->count());
     }
 
     public function test_a_valid_absolute_address_and_a_plain_path_pass(): void

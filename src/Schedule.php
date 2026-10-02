@@ -18,6 +18,17 @@ use Illuminate\Console\Scheduling\Schedule as LaravelSchedule;
  */
 final class Schedule
 {
+    /**
+     * When `seo-files:llms` runs on schedule (HH:MM), or null when the schedule is off. The
+     * panel warns with it: a scheduled run replaces whatever the editor saved.
+     */
+    public static function llmsTime(): ?string
+    {
+        return (bool) config('filament-seo-files.schedule.enabled', false)
+            ? (string) config('filament-seo-files.schedule.times.llms', '04:20')
+            : null;
+    }
+
     public static function register(LaravelSchedule $schedule): void
     {
         if (!(bool) config('filament-seo-files.schedule.enabled', false)) {

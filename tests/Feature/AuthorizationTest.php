@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Tests\Feature;
 
+use Asignua\FilamentSeoFiles\Actions\EditLlmsAction;
+use Asignua\FilamentSeoFiles\Actions\EditRobotsAction;
+use Asignua\FilamentSeoFiles\Actions\GenerateLlmsAction;
+use Asignua\FilamentSeoFiles\Actions\GenerateSitemapAction;
 use Asignua\FilamentSeoFiles\Pages\SeoFilesPage;
 use Asignua\FilamentSeoFiles\Resources\SitemapUrls\SitemapUrlResource;
 use Asignua\FilamentSeoFiles\SeoFilesPlugin;
@@ -19,13 +23,48 @@ class AuthorizationTest extends TestCase
         parent::setUp();
 
         $this->actingAs($this->admin());
+
+        // The workbench panel opts in with ->authorize(true); these tests start from the
+        // plugin's own default.
+        SeoFilesPlugin::get()->authorize(null);
     }
 
-    public function test_everyone_in_the_panel_is_allowed_by_default(): void
+    public function test_nobody_is_allowed_by_default(): void
     {
-        $this->assertTrue(SeoFilesPlugin::allows());
+        // Fail closed: the plugin writes robots.txt and llms files into the web root, so a
+        // panel with several roles must not hand that to its lowest-privileged editor.
+        $this->assertFalse(SeoFilesPlugin::allows());
+        $this->assertFalse(SeoFilesPage::canAccess());
+        $this->assertFalse(SitemapUrlResource::canAccess());
+        $this->assertFalse((new SeoFilesPlugin)->isAllowed());
+    }
+
+    public function test_authorize_true_allows_everyone_in_the_panel(): void
+    {
+        SeoFilesPlugin::get()->authorize(true);
+
         $this->assertTrue(SeoFilesPage::canAccess());
         $this->assertTrue(SitemapUrlResource::canAccess());
+    }
+
+    public function test_every_public_action_carries_the_plugin_policy(): void
+    {
+        $actions = [
+            GenerateSitemapAction::make(),
+            EditRobotsAction::make(),
+            GenerateLlmsAction::make(),
+            EditLlmsAction::make(),
+        ];
+
+        foreach ($actions as $action) {
+            $this->assertFalse($action->isAuthorized(), $action->getName());
+        }
+
+        SeoFilesPlugin::get()->authorize(true);
+
+        foreach ($actions as $action) {
+            $this->assertTrue($action->isAuthorized(), $action->getName());
+        }
     }
 
     public function test_the_gate_decides_when_it_is_defined(): void
@@ -60,6 +99,8 @@ class AuthorizationTest extends TestCase
 
     public function test_an_authorised_user_can(): void
     {
+        SeoFilesPlugin::get()->authorize(true);
+
         $this->get('/admin/seo-files')->assertOk();
         $this->get('/admin/sitemap-urls')->assertOk();
     }

@@ -31,7 +31,7 @@ final class SitemapLocation
 
     /**
      * The canonical form of a stored value: a full address keeps its path but gets a
-     * lower-case scheme; a path loses its surrounding slashes. Deduplication compares
+     * lower-case scheme; a path loses its surrounding slashes (the root path stays `/`). Deduplication compares
      * strings, so one form must be stored, not `search`, `/search` and `/search/` side
      * by side.
      */
@@ -49,7 +49,10 @@ final class SitemapLocation
             return Str::lower(substr($value, 0, $position)).substr($value, $position);
         }
 
-        return trim($value, '/');
+        // The root path is kept as `/`: an empty string means "no address in this language".
+        $path = trim($value, '/');
+
+        return $path === '' ? '/' : $path;
     }
 
     /**
@@ -89,6 +92,15 @@ final class SitemapLocation
         }
 
         return $cluster;
+    }
+
+    /**
+     * The hreflang value of a site language: BCP 47 uses a hyphen, so Laravel's `pt_BR`
+     * becomes `pt-BR` (Google ignores an invalid annotation, silently breaking the cluster).
+     */
+    public static function hreflang(string $locale): string
+    {
+        return str_replace('_', '-', $locale);
     }
 
     /**
