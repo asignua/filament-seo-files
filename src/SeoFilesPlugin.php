@@ -10,6 +10,8 @@ use BackedEnum;
 use Closure;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use Filament\Support\Facades\FilamentAsset;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Gate;
 use UnitEnum;
 
@@ -155,6 +157,11 @@ class SeoFilesPlugin implements Plugin
         if ((bool) value($this->resource)) {
             $panel->resources([SitemapUrlResource::class]);
         }
+
+        // After the panel's theme, not before it as auto-loaded plugin assets are: a custom
+        // theme compiles the same utilities, and with equal specificity the later file wins.
+        $panel->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): string => '<link rel="stylesheet" href="'
+            .e(FilamentAsset::getStyleHref(SeoFilesServiceProvider::STYLESHEET, SeoFilesServiceProvider::PACKAGE)).'" />');
     }
 
     public function boot(Panel $panel): void {}

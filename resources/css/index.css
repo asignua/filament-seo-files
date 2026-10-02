@@ -1,0 +1,20 @@
+/*
+ * Built into resources/dist/filament-seo-files.css (npm run build) and registered with FilamentAsset,
+ * so the host needs no custom theme that scans this package.
+ *
+ * Filament's theme is only *referenced* (colours, spacing, the `dark` variant); nothing
+ * of it is emitted — the panel ships it. Only the utilities used by the views end up here.
+ */
+
+/*
+ * Without this line the `utilities` layer would be declared first and Filament's `base`
+ * (preflight) would win over every utility of this file.
+ */
+@layer theme, base, components, utilities;
+
+@reference '../../vendor/filament/filament/resources/css/theme.css';
+
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+
+@source '../views';
+@source inline('text-gray-400');

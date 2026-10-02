@@ -8,4 +8,7 @@
 /phpstan.neon.dist  export-ignore
 /phpunit.xml.dist   export-ignore
 /pint.json          export-ignore
+/package.json       export-ignore
+/package-lock.json  export-ignore
+/resources/css      export-ignore
 /SECURITY.md        export-ignore

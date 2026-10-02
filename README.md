@@ -98,6 +98,16 @@ $panel->plugin(SeoFilesPlugin::make());
 The package has two layers. The **registry** `SeoFiles` holds your sources and resolvers and works everywhere —
 console, scheduler, queue, routes — with or without a panel. The **plugin** `SeoFilesPlugin` only draws the panel UI.
 
+## Styling
+
+The views use a few Tailwind utilities that Filament's own stylesheet does not contain. The plugin ships them as a small compiled file (`resources/dist/filament-seo-files.css`, no preflight) and links it after the panel's styles, so **no custom theme or `@source` line is needed**. Publish the file after installing or upgrading:
+
+```bash
+php artisan filament:assets
+```
+
+The stylesheet is linked by the plugin registered in the panel. Editing the views? Rebuild with `npm install && npm run build`.
+
 ## Quick start
 
 In `AppServiceProvider::boot()` tell the registry where your pages are:

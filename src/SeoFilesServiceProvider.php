@@ -7,6 +7,8 @@ namespace Asignua\FilamentSeoFiles;
 use Asignua\FilamentSeoFiles\Commands\LlmsCommand;
 use Asignua\FilamentSeoFiles\Commands\SitemapCommand;
 use Asignua\FilamentSeoFiles\Repositories\SitemapUrlRepository;
+use Filament\Support\Assets\Css;
+use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Console\Scheduling\Schedule as LaravelSchedule;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -14,6 +16,10 @@ use Spatie\Sitemap\SitemapServiceProvider;
 
 class SeoFilesServiceProvider extends PackageServiceProvider
 {
+    public const string PACKAGE = 'asignua/filament-seo-files';
+
+    public const string STYLESHEET = 'filament-seo-files';
+
     public static string $name = 'filament-seo-files';
 
     public function configurePackage(Package $package): void
@@ -38,6 +44,12 @@ class SeoFilesServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        // Published by `filament:assets`, but linked by the plugin itself after the panel's
+        // theme (see the plugin's register()): a custom theme must not beat our `dark:` variants.
+        FilamentAsset::register([
+            Css::make(self::STYLESHEET, __DIR__.'/../resources/dist/filament-seo-files.css')->loadedOnRequest(),
+        ], self::PACKAGE);
+
         // The scheduler is resolved lazily; the callback also runs when it is resolved
         // late, so the registration never depends on provider order.
         $this->callAfterResolving(LaravelSchedule::class, Schedule::register(...));

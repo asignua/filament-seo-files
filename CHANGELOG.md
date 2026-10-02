@@ -2,6 +2,10 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
+## v1.0.1 - 2026-10-02
+
+- Fix: the "SEO files" page and the "Sitemap URLs" form used Tailwind utilities that Filament's stylesheet does not contain, so in a panel without a custom theme scanning the plugin they were unstyled. The plugin now ships a small compiled stylesheet (`resources/dist/filament-seo-files.css`) and links it after the panel's styles. Run `php artisan filament:assets` after upgrading.
+
 ## v1.0.0 - 2026-10-02
 
 - `sitemap.xml` with hreflang alternates, `x-default` and `<lastmod>`; never `priority` or `changefreq`.
