@@ -30,6 +30,13 @@ class LlmsFullRenderTest extends TestCase
         $this->assertSame("# Two lines\nSource: https://x.test/e", $e);
     }
 
+    public function test_the_preamble_keeps_name_and_description_on_one_line_each(): void
+    {
+        $doc = LlmsFull::document("My\nSite", "First line.\nSecond line.", []);
+
+        $this->assertSame("# My Site\n\n> First line. Second line.", $doc);
+    }
+
     public function test_entry_with_empty_body_is_just_heading_and_source(): void
     {
         $e = LlmsFull::entry('Empty', 'https://x.test/e', '   ');

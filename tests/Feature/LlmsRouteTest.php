@@ -7,6 +7,7 @@ namespace Asignua\FilamentSeoFiles\Tests\Feature;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * llms.txt of a prefixed language is served by a ROUTE, not a static file: a real
@@ -58,6 +59,29 @@ class LlmsRouteTest extends TestCase
 
         $this->get('/uk/llms.txt')->assertOk();
         $this->assertFileExists(public_path('.llms/uk.txt'));
+    }
+
+    public function test_a_file_being_built_elsewhere_answers_503_at_once(): void
+    {
+        // Another request holds the build lock: this one must not wait for it (a burst
+        // would tie up the PHP worker pool) but answer 503 right away.
+        $path = app(LlmsTxtFile::class)->path('uk');
+        $lock = Cache::lock('filament-seo-files:'.md5($path), 60);
+        $this->assertTrue($lock->get());
+
+        $started = microtime(true);
+
+        try {
+            $this->get('/uk/llms.txt')->assertStatus(503)->assertHeader('Retry-After', '30');
+        } finally {
+            $lock->release();
+        }
+
+        $this->assertLessThan(2.0, microtime(true) - $started);
+        $this->assertFileDoesNotExist($path);
+
+        // Once the lock is free the file is built as usual.
+        $this->get('/uk/llms.txt')->assertOk();
     }
 
     public function test_the_routes_start_no_session(): void

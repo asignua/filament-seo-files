@@ -45,10 +45,13 @@ class LlmsFull
      */
     public static function document(string $siteName, ?string $description, array $entries): string
     {
-        $preamble = "# {$siteName}";
+        // One line each: a newline in the name would end the heading, one in the
+        // description would leave the rest outside the blockquote.
+        $preamble = '# '.self::line($siteName);
+        $description = self::line((string) $description);
 
-        if ($description !== null && trim($description) !== '') {
-            $preamble .= "\n\n> ".trim($description);
+        if ($description !== '') {
+            $preamble .= "\n\n> ".$description;
         }
 
         return implode("\n\n---\n\n", [$preamble, ...$entries]);

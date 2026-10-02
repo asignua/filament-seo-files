@@ -302,8 +302,8 @@ Prefixed languages are served at `/{locale}/llms.txt` and `/{locale}/llms-full.t
 registers for you. They are not static files because a real `public/{locale}/` directory would shadow your
 `/{locale}/` home page (`php artisan serve` and nginx's `try_files $uri $uri/` would serve the directory). The leading
 dot of `.llms` also keeps nginx from serving the stored files directly. When a language has no stored file yet, the
-first request builds it once and stores it (behind a cache lock; a request that waits too long gets `503` with
-`Retry-After`), and every later request reads the file — an anonymous visitor can never make the server rebuild the
+first request builds it once and stores it (behind a cache lock; a request that arrives while another one is building
+gets `503` with `Retry-After` at once instead of waiting), and every later request reads the file — an anonymous visitor can never make the server rebuild the
 document per request. Run `seo-files:llms` to refresh the files.
 
 The routes carry no middleware by default (`routes.middleware`): the `web` group would start a session and set a cookie

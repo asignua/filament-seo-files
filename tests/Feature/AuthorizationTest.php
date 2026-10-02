@@ -11,10 +11,13 @@ use Asignua\FilamentSeoFiles\Actions\GenerateSitemapAction;
 use Asignua\FilamentSeoFiles\Pages\SeoFilesPage;
 use Asignua\FilamentSeoFiles\Resources\SitemapUrls\SitemapUrlResource;
 use Asignua\FilamentSeoFiles\SeoFilesPlugin;
+use Asignua\FilamentSeoFiles\Tests\Fixtures\ToolsPage;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
 use Filament\Facades\Filament;
 use Filament\Panel;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Livewire;
 
 class AuthorizationTest extends TestCase
 {
@@ -65,6 +68,32 @@ class AuthorizationTest extends TestCase
         foreach ($actions as $action) {
             $this->assertTrue($action->isAuthorized(), $action->getName());
         }
+    }
+
+    public function test_an_embedded_action_refuses_an_unauthorised_user(): void
+    {
+        // A host page anyone can open embeds EditRobotsAction; the plugin's policy says no.
+        File::put(public_path('robots.txt'), "User-agent: *\n");
+
+        $page = Livewire::test(ToolsPage::class)->assertActionHidden('editRobots');
+
+        // A forged request: mount, then submit the form state directly, past the test
+        // helpers that refuse a hidden action.
+        $page->call('mountAction', 'editRobots');
+        $this->assertSame([], $page->get('mountedActions'));
+
+        $page->set('mountedActions', [['name' => 'editRobots', 'arguments' => [], 'context' => [], 'data' => ['robots' => "User-agent: *\nDisallow: /"]]])
+            ->call('callMountedAction');
+
+        $this->assertSame("User-agent: *\n", File::get(public_path('robots.txt')));
+
+        // The same page, the policy allowing: the action works.
+        SeoFilesPlugin::get()->authorize(true);
+
+        Livewire::test(ToolsPage::class)
+            ->callAction('editRobots', ['robots' => "User-agent: *\nDisallow: /"]);
+
+        $this->assertSame("User-agent: *\nDisallow: /\n", File::get(public_path('robots.txt')));
     }
 
     public function test_the_gate_decides_when_it_is_defined(): void

@@ -28,7 +28,7 @@ trait GeneratesOnDemand
     /**
      * The stored file; built and stored first when it does not exist.
      *
-     * @throws LockTimeoutException when another request has been building it for too long
+     * @throws LockTimeoutException at once when another request is building it
      */
     public function serve(string $locale): string
     {
@@ -38,15 +38,28 @@ trait GeneratesOnDemand
             return (string) File::get($path);
         }
 
-        return Cache::lock('filament-seo-files:'.md5($path), 120)->block(30, function () use ($locale, $path): string {
-            // Another request may have written it while this one waited for the lock.
-            if (File::exists($path)) {
+        // Never wait for the lock: while one request builds the file, every other one would
+        // hold a PHP worker for as long as it waits — a burst could tie up the whole pool.
+        // The caller answers 503 + Retry-After instead.
+        $lock = Cache::lock('filament-seo-files:'.md5($path), 600);
+
+        if (!$lock->get()) {
+            throw new LockTimeoutException('The file is being built by another request.');
+        }
+
+        try {
+            // Another request may have written it between the check above and the lock.
+            clearstatcache(true, $path);
+
+            if (is_file($path)) {
                 return (string) File::get($path);
             }
 
             $this->write($locale, $this->template($locale));
 
             return (string) File::get($path);
-        });
+        } finally {
+            $lock->release();
+        }
     }
 }
