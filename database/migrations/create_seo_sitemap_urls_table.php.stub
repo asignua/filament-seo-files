@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Manual URLs of sitemap.xml — addresses the registered sources know nothing about (a
+ * search page, RSS feeds, external landing pages).
+ *
+ * One row = ONE multilingual <url>: `url` is a map `{locale: "path" | "https://…"}` that
+ * becomes <loc> + hreflang alternates. `title` is a label for the admin only.
+ *
+ * There is no unique index on `url` on purpose: MariaDB keeps json as longtext (a unique
+ * index would need a prefix length) and has no functional indexes, and uniqueness here is
+ * per language, not per row. Duplicates are caught by the form validation and by the map
+ * of already emitted addresses in the sitemap generator.
+ */
+return new class extends Migration
+{
+    private function table(): string
+    {
+        return (string) config('filament-seo-files.tables.sitemap_urls', 'seo_sitemap_urls');
+    }
+
+    public function up(): void
+    {
+        Schema::create($this->table(), function (Blueprint $table): void {
+            $table->id();
+            $table->json('url')->nullable();
+            $table->json('title')->nullable();
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+
+            $table->index('active');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists($this->table());
+    }
+};
