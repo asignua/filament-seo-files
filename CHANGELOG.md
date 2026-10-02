@@ -2,7 +2,7 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
-## v1.0.0 - unreleased
+## v1.0.0 - 2026-10-02
 
 - `sitemap.xml` with hreflang alternates, `x-default` and `<lastmod>`; never `priority` or `changefreq`.
 - Large sites: above `sitemap.max_urls` (50 000) `sitemap.xml` becomes a `<sitemapindex>` and the pages are written as `sitemap-1.xml` … `sitemap-N.xml`; streaming generation, one deduplication map for all parts, parts closed early near 50 MB, stale parts removed, every file written atomically. `sitemap.split`: `auto` / `always` / `never`.
