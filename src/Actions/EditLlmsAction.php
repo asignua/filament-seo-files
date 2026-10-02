@@ -31,6 +31,9 @@ class EditLlmsAction extends Action
         $this
             ->label(__('filament-seo-files::seo-files.actions.edit'))
             ->icon('heroicon-o-document-text')
+            ->color('gray')
+            ->modalHeading(__('filament-seo-files::seo-files.actions.edit_file', ['file' => 'llms.txt']))
+            ->modalSubmitActionLabel(__('filament-seo-files::seo-files.actions.save'))
             ->fillForm(fn (): array => [
                 'locale' => SeoFiles::defaultLocale(),
                 'llms' => app(LlmsTxtFile::class)->read(SeoFiles::defaultLocale()),
@@ -48,7 +51,6 @@ class EditLlmsAction extends Action
                     ->rows(18)
                     ->required()
                     ->maxLength(50000)
-                    ->hint(__('filament-seo-files::seo-files.actions.reset'))
                     ->hintAction(
                         Action::make('resetLlms')
                             ->label(__('filament-seo-files::seo-files.actions.reset'))

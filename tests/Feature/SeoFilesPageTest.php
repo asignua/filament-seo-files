@@ -6,6 +6,7 @@ namespace Asignua\FilamentSeoFiles\Tests\Feature;
 
 use Asignua\FilamentSeoFiles\Pages\SeoFilesPage;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
+use Filament\Forms\Components\Textarea;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 
@@ -100,5 +101,40 @@ class SeoFilesPageTest extends TestCase
         Livewire::test(SeoFilesPage::class)
             ->callAction('editLlms', ['locale' => 'en', 'llms' => ''])
             ->assertHasActionErrors(['llms']);
+    }
+
+    /**
+     * robots.txt is a static file: the page must not claim a template is served while it is
+     * missing — nothing serves it.
+     */
+    public function test_a_missing_robots_file_is_reported_as_missing(): void
+    {
+        Livewire::test(SeoFilesPage::class)
+            ->assertSee(__('filament-seo-files::seo-files.page.robots_missing'));
+    }
+
+    public function test_the_llms_section_shows_when_and_for_which_languages_it_was_generated(): void
+    {
+        $this->makePost('a', 'Alpha');
+        $this->artisan('seo-files:llms')->assertExitCode(0);
+
+        Livewire::test(SeoFilesPage::class)
+            ->assertSee(__('filament-seo-files::seo-files.page.llms_languages', ['locales' => 'en, uk']));
+    }
+
+    /**
+     * The reset control is a hint ACTION only — a plain hint with the same text drew it twice.
+     */
+    public function test_the_editors_show_one_reset_control(): void
+    {
+        foreach (['editRobots' => 'robots', 'editLlms' => 'llms'] as $action => $field) {
+            $page = Livewire::test(SeoFilesPage::class)->mountAction($action)->instance();
+            $schema = $page->getSchema((string) $page->getMountedActionSchemaName());
+            $textarea = $schema?->getComponent(fn ($component): bool => $component instanceof Textarea && $component->getName() === $field);
+
+            $this->assertInstanceOf(Textarea::class, $textarea, $action);
+            $this->assertNull($textarea->getHint(), $action);
+            $this->assertCount(1, $textarea->getHintActions(), $action);
+        }
     }
 }

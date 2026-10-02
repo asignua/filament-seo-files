@@ -27,6 +27,9 @@ class EditRobotsAction extends Action
         $this
             ->label(__('filament-seo-files::seo-files.actions.edit'))
             ->icon('heroicon-o-document-text')
+            ->color('gray')
+            ->modalHeading(__('filament-seo-files::seo-files.actions.edit_file', ['file' => 'robots.txt']))
+            ->modalSubmitActionLabel(__('filament-seo-files::seo-files.actions.save'))
             ->fillForm(fn (): array => ['robots' => app(RobotsFile::class)->read()])
             ->schema([
                 Textarea::make('robots')
@@ -34,7 +37,6 @@ class EditRobotsAction extends Action
                     ->rows(14)
                     ->required()
                     ->maxLength(20000)
-                    ->hint(__('filament-seo-files::seo-files.actions.reset'))
                     ->hintAction(
                         Action::make('reset')
                             ->label(__('filament-seo-files::seo-files.actions.reset'))

@@ -10,6 +10,7 @@ use Asignua\FilamentSeoFiles\Actions\GenerateLlmsAction;
 use Asignua\FilamentSeoFiles\Actions\GenerateSitemapAction;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\SeoFilesPlugin;
+use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
 use Asignua\FilamentSeoFiles\Support\RobotsFile;
 use Asignua\FilamentSeoFiles\Support\SitemapFile;
 use BackedEnum;
@@ -17,6 +18,7 @@ use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Date;
 use UnitEnum;
 
 /**
@@ -113,16 +115,40 @@ class SeoFilesPage extends Page
                 'help' => __('filament-seo-files::seo-files.page.robots_help'),
                 'status' => app(RobotsFile::class)->path() !== '' && file_exists(app(RobotsFile::class)->path())
                     ? __('filament-seo-files::seo-files.page.file_exists')
-                    : __('filament-seo-files::seo-files.page.template_served'),
+                    : __('filament-seo-files::seo-files.page.robots_missing'),
                 'actions' => ['editRobotsAction'],
             ],
             [
                 'title' => 'llms.txt / llms-full.txt',
                 'help' => __('filament-seo-files::seo-files.page.llms_help', ['locales' => implode(', ', SeoFiles::allLocales())]),
-                'status' => '',
+                'status' => $this->llmsStatus(),
                 'actions' => ['generateLlmsAction', 'editLlmsAction'],
             ],
         ];
+    }
+
+    /**
+     * When the llms.txt files were last written and for which languages they exist.
+     */
+    private function llmsStatus(): string
+    {
+        $files = app(LlmsTxtFile::class);
+        $times = [];
+
+        foreach (SeoFiles::allLocales() as $locale) {
+            $path = $files->path($locale);
+
+            if (is_file($path)) {
+                $times[$locale] = (int) filemtime($path);
+            }
+        }
+
+        if ($times === []) {
+            return __('filament-seo-files::seo-files.page.not_generated');
+        }
+
+        return __('filament-seo-files::seo-files.page.generated_at', ['time' => Date::createFromTimestamp(max($times))->isoFormat('LLL')])
+            .' · '.__('filament-seo-files::seo-files.page.llms_languages', ['locales' => implode(', ', array_keys($times))]);
     }
 
     private static function plugin(): ?SeoFilesPlugin

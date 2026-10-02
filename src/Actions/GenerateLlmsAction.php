@@ -23,7 +23,7 @@ class GenerateLlmsAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('filament-seo-files::seo-files.actions.run'))
+            ->label(__('filament-seo-files::seo-files.actions.generate'))
             ->icon('heroicon-o-sparkles')
             ->requiresConfirmation()
             ->action(fn () => $this->runCommand('seo-files:llms'));
