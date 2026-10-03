@@ -2,7 +2,7 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
-## v1.0.1 - 2026-10-02
+## v1.0.1 - 2026-10-03
 
 - Fix: the "SEO files" page and the "Sitemap URLs" form used Tailwind utilities that Filament's stylesheet does not contain, so in a panel without a custom theme scanning the plugin they were unstyled. The plugin now ships a small compiled stylesheet (`resources/dist/filament-seo-files.css`) and links it after the panel's styles. Run `php artisan filament:assets` after upgrading.
 - **Security (breaking):** authorization now fails closed. Without an `authorize()` closure and without a `seo-files.manage` gate nobody can open the page, the resource or the actions (before, every panel user could rewrite `robots.txt` and the llms files). Restore the old behaviour with `SeoFilesPlugin::make()->authorize(true)`; `authorize(null)` returns to the default.
