@@ -1,6 +1,6 @@
 {
     "name": "asignua/filament-seo-files",
-    "description": "sitemap.xml, robots.txt, llms.txt and llms-full.txt for Filament panels: pluggable page sources, multilingual hreflang, manual sitemap URLs, an editor page and scheduled generation.",
+    "description": "The files crawlers and AI agents read — sitemap.xml, robots.txt, llms.txt and llms-full.txt — generated from your own models and managed from a Filament 5 panel. Pluggable page sources, reciprocal hreflang clusters with x-default, manual sitemap URLs that never shadow a real page, an automatic sitemap index past 50 000 URLs, per-language llms.txt, an editor page for robots.txt and llms.txt, and scheduled generation.",
     "keywords": ["filament", "filament-plugin", "laravel", "seo", "sitemap", "robots-txt", "llms-txt", "hreflang"],
     "homepage": "https://github.com/asignua/filament-seo-files",
     "support": {
