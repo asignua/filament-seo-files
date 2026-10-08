@@ -2,7 +2,7 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
-## Unreleased
+## v1.0.2 - 2026-10-08
 
 - Fix: the plugin's stylesheet no longer declares generic utilities (`.flex`, `.text-sm`, `.text-gray-400`…). Linked after the panel's theme, they beat the theme's responsive and `dark:` variants on every panel page. The page and the form preview use `fi-seo-files-*` classes now, and the stylesheet is linked only on the plugin's own pages. Run `php artisan filament:assets` after upgrading.
 - Fix: the panel's "Generate" buttons and the llms editor (reset, first read) build the public files outside the admin context: no Filament panel, tenant or logged-in user, as the scheduler does (every configured guard, the default one and each panel's, is swapped for one with nobody in it for the duration, since a session guard would re-read the admin from the session; `Filament::auth()` is covered too). Before, a tenant scope or a user-dependent global scope leaked into `sitemap.xml` and `llms-full.txt`.
