@@ -2,6 +2,19 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
+## Unreleased
+
+- Fix: the plugin's stylesheet no longer declares generic utilities (`.flex`, `.text-sm`, `.text-gray-400`…). Linked after the panel's theme, they beat the theme's responsive and `dark:` variants on every panel page. The page and the form preview use `fi-seo-files-*` classes now, and the stylesheet is linked only on the plugin's own pages. Run `php artisan filament:assets` after upgrading.
+- Fix: the panel's "Generate" buttons and the llms editor (reset, first read) build the public files outside the admin context: no Filament panel, tenant or logged-in user, as the scheduler does (every configured guard, the default one and each panel's, is swapped for one with nobody in it for the duration, since a session guard would re-read the admin from the session; `Filament::auth()` is covered too). Before, a tenant scope or a user-dependent global scope leaked into `sitemap.xml` and `llms-full.txt`.
+- Fix: `seo-files:sitemap` and `seo-files:llms` take a non-blocking cache lock, so a panel click cannot interleave with the nightly run (one run deleting the parts the other lists). A refused run exits with an error; the panel shows it as a failure, and so it does for any non-zero exit code.
+- Fix: the llms files are built in the language of the file (`app()->getLocale()` is that language inside the source closures), and `ModelSource` takes the default title from the translatable `title` of that language. A non-string title no longer throws.
+- Fix: HTML entities and no-break spaces in `ModelSource` descriptions are decoded to plain text before the length limit is applied.
+- Fix: a `ModelSource` restricted with `->locales()` no longer scans its table for the languages it does not serve.
+- Fix: the source registry is reset when the service provider registers, so a host test suite that boots a fresh application per test no longer piles up copies of a source (and Octane's cloned per-request applications keep the sources registered at boot).
+- Fix: the generation time on the "SEO files" page is shown in the app timezone (it was UTC).
+- Fix: the "Sitemap URLs" search is case-insensitive on MySQL/MariaDB.
+- Fix: BCP 47 locales such as `es-419` and `zh-Hant-TW` no longer break the "SEO files" page or abort `seo-files:llms`.
+
 ## v1.0.1 - 2026-10-03
 
 - Fix: the "SEO files" page and the "Sitemap URLs" form used Tailwind utilities that Filament's stylesheet does not contain, so in a panel without a custom theme scanning the plugin they were unstyled. The plugin now ships a small compiled stylesheet (`resources/dist/filament-seo-files.css`) and links it after the panel's styles. Run `php artisan filament:assets` after upgrading.

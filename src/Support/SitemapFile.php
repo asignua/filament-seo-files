@@ -53,7 +53,7 @@ class SitemapFile
     public function generatedAt(): ?Carbon
     {
         return $this->exists()
-            ? Date::createFromTimestamp((int) File::lastModified($this->path()))
+            ? Date::createFromTimestamp((int) File::lastModified($this->path()), (string) config('app.timezone'))
             : null;
     }
 

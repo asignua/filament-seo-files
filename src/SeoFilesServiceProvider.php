@@ -35,6 +35,9 @@ class SeoFilesServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
+        // A new application starts with no sources (see SeoFiles::resetSources()).
+        SeoFiles::resetSources();
+
         // The sitemap views are registered by spatie's provider; it is auto-discovered, but
         // a host that disabled package discovery would otherwise fail on the first render.
         $this->app->register(SitemapServiceProvider::class);

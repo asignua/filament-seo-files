@@ -24,7 +24,7 @@ class StylesheetTest extends TestCase
     {
         $css = (string) file_get_contents(__DIR__.'/../../resources/dist/filament-seo-files.css');
 
-        $this->assertStringContainsString('@layer theme,base,components', $css);
+        $this->assertStringContainsString('@layer theme,base;@layer components', $css);
         $this->assertStringNotContainsString('box-sizing', $css, 'no preflight');
     }
 
@@ -38,5 +38,18 @@ class StylesheetTest extends TestCase
             'rel="stylesheet" href="'.e(FilamentAsset::getStyleHref(SeoFilesServiceProvider::STYLESHEET, SeoFilesServiceProvider::PACKAGE)).'"',
             (string) $html,
         );
+    }
+
+    public function test_the_stylesheet_has_no_generic_utilities(): void
+    {
+        $css = (string) file_get_contents(__DIR__.'/../../resources/dist/filament-seo-files.css');
+
+        // Unscoped utilities would beat the theme's variants (`dark:`, `md:`) on every page.
+        foreach (['.flex', '.text-sm', '.text-gray-', '.gap-', '.items-center'] as $utility) {
+            $this->assertStringNotContainsString($utility.'{', $css);
+            $this->assertStringNotContainsString($utility.',', $css);
+        }
+
+        $this->assertStringContainsString('.fi-seo-files-status', $css);
     }
 }

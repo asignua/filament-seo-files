@@ -6,8 +6,10 @@ namespace Asignua\FilamentSeoFiles\Commands;
 
 use Asignua\FilamentSeoFiles\Commands\Concerns\DisplaysRelativePaths;
 use Asignua\FilamentSeoFiles\SeoFiles;
+use Asignua\FilamentSeoFiles\Support\GenerationInProgress;
 use Asignua\FilamentSeoFiles\Support\LlmsFullTxtFile;
 use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
+use Asignua\FilamentSeoFiles\Support\PublicContext;
 use Illuminate\Console\Command;
 
 /**
@@ -25,6 +27,17 @@ class LlmsCommand extends Command
     protected $description = 'Generate llms.txt and llms-full.txt for every language (index + full site content for AI agents)';
 
     public function handle(LlmsTxtFile $file, LlmsFullTxtFile $full): int
+    {
+        try {
+            return PublicContext::exclusive('llms', fn (): int => $this->generate($file, $full));
+        } catch (GenerationInProgress $exception) {
+            $this->error($exception->getMessage());
+
+            return self::FAILURE;
+        }
+    }
+
+    private function generate(LlmsTxtFile $file, LlmsFullTxtFile $full): int
     {
         /** @var list<string> $requested */
         $requested = (array) $this->option('locale');

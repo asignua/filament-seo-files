@@ -2,19 +2,46 @@
  * Built into resources/dist/filament-seo-files.css (npm run build) and registered with FilamentAsset,
  * so the host needs no custom theme that scans this package.
  *
- * Filament's theme is only *referenced* (colours, spacing, the `dark` variant); nothing
- * of it is emitted — the panel ships it. Only the utilities used by the views end up here.
+ * The file is linked after the panel's theme, so it must NOT declare generic utilities
+ * (`.flex`, `.text-sm`, `.text-gray-400`…): with equal specificity the later `.text-gray-400`
+ * beats the theme's `.dark\:text-gray-500` and `.flex` beats `.lg\:hidden` on every panel
+ * page. Only classes with the plugin's own prefix live here, written in plain CSS over
+ * Filament's colour variables.
  */
 
-/*
- * Without this line the `utilities` layer would be declared first and Filament's `base`
- * (preflight) would win over every utility of this file.
- */
 @layer theme, base, components, utilities;
 
-@reference '../../vendor/filament/filament/resources/css/theme.css';
+@layer components {
+    .fi-seo-files-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: calc(0.25rem * 3);
+    }
 
-@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+    .fi-seo-files-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: calc(0.25rem * 2);
+    }
 
-@source '../views';
-@source inline('text-gray-400');
+    .fi-seo-files-status {
+        font-size: 0.875rem;
+        line-height: 1.43;
+        color: var(--gray-500);
+    }
+
+    .dark .fi-seo-files-status {
+        color: var(--gray-400);
+    }
+
+    .fi-seo-files-muted {
+        color: var(--gray-400);
+    }
+
+    .dark .fi-seo-files-muted {
+        color: var(--gray-500);
+    }
+}

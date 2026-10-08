@@ -90,7 +90,7 @@ class SitemapUrlForm
 
                 return new HtmlString(
                     e(__('filament-seo-files::seo-files.fields.link')).': '
-                    .($href === null ? '<span class="text-gray-400">—</span>' : '<code>'.e($href).'</code>'),
+                    .($href === null ? '<span class="fi-seo-files-muted">—</span>' : '<code>'.e($href).'</code>'),
                 );
             }),
 

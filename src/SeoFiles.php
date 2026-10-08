@@ -162,7 +162,8 @@ final class SeoFiles
             }
 
             // The same instance twice is a mistake nobody wants (every page would be listed
-            // twice): a provider that boots once per test application would add it each time.
+            // twice). The registry itself is reset by the service provider on every
+            // application boot, see resetSources().
             if (!in_array($source, self::$sources, true)) {
                 self::$sources[] = $source;
             }
@@ -316,6 +317,18 @@ final class SeoFiles
         return self::$robotsTemplate !== null
             ? (self::$robotsTemplate)(self::baseUrl(), $default)
             : $default;
+    }
+
+    /**
+     * Empties the source registry. Called by the service provider's `register()`: a host test
+     * suite that boots a fresh application per test would otherwise pile up copies of a
+     * source. It is deliberately NOT keyed to `app()` at read time: Octane runs every request
+     * in a cloned sandbox application, which would look like a "new application" and lose
+     * the sources registered at boot.
+     */
+    public static function resetSources(): void
+    {
+        self::$sources = [];
     }
 
     /**

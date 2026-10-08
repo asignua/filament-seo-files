@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Asignua\FilamentSeoFiles\Commands;
 
 use Asignua\FilamentSeoFiles\Commands\Concerns\DisplaysRelativePaths;
+use Asignua\FilamentSeoFiles\Support\GenerationInProgress;
 use Asignua\FilamentSeoFiles\Support\SitemapGenerator;
 use Illuminate\Console\Command;
 
@@ -18,7 +19,13 @@ class SitemapCommand extends Command
 
     public function handle(SitemapGenerator $generator): int
     {
-        $result = $generator->generate();
+        try {
+            $result = $generator->generate();
+        } catch (GenerationInProgress $exception) {
+            $this->error($exception->getMessage());
+
+            return self::FAILURE;
+        }
 
         // One <url> per language version: on a multilingual site there are more URLs than
         // pages, and the count must match the file (and the "SEO files" page).

@@ -32,7 +32,9 @@ class SitemapUrlsTable
                 TextColumn::make('title')
                     ->label(__('filament-seo-files::seo-files.fields.title'))
                     ->state(fn (SitemapUrl $record): string => $record->label())
-                    ->searchable(['title', 'url']),
+                    ->searchable(['title', 'url'])
+                    // MySQL/MariaDB compare json as utf8mb4_bin: without this "Search" misses "search".
+                    ->forceSearchCaseInsensitive(),
                 ...array_map(
                     static fn (string $locale): TextColumn => TextColumn::make('url.'.$locale)
                         ->label(__('filament-seo-files::seo-files.fields.url').' ('.strtoupper($locale).')')

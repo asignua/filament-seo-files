@@ -40,6 +40,13 @@ class LlmsFullTxtFile
 
     public function template(string $locale): string
     {
+        // Built as the scheduler would build it, in the language of the file: the admin's
+        // panel session and UI locale must not leak into a public document.
+        return PublicContext::run(fn (): string => $this->build($locale), $locale);
+    }
+
+    private function build(string $locale): string
+    {
         $entries = [];
 
         foreach (SeoFiles::llmsFullSources() as $source) {

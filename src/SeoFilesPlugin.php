@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Asignua\FilamentSeoFiles;
 
 use Asignua\FilamentSeoFiles\Pages\SeoFilesPage;
+use Asignua\FilamentSeoFiles\Resources\SitemapUrls\Pages\CreateSitemapUrl;
+use Asignua\FilamentSeoFiles\Resources\SitemapUrls\Pages\EditSitemapUrl;
+use Asignua\FilamentSeoFiles\Resources\SitemapUrls\Pages\ListSitemapUrls;
 use Asignua\FilamentSeoFiles\Resources\SitemapUrls\SitemapUrlResource;
 use BackedEnum;
 use Closure;
@@ -163,8 +166,14 @@ class SeoFilesPlugin implements Plugin
 
         // After the panel's theme, not before it as auto-loaded plugin assets are: a custom
         // theme compiles the same utilities, and with equal specificity the later file wins.
-        $panel->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): string => '<link rel="stylesheet" href="'
-            .e(FilamentAsset::getStyleHref(SeoFilesServiceProvider::STYLESHEET, SeoFilesServiceProvider::PACKAGE)).'" />');
+        // Only on the plugin's own pages: the file is small and prefixed, but there is no
+        // reason to ship it to every page of the panel.
+        $panel->renderHook(
+            PanelsRenderHook::STYLES_AFTER,
+            fn (): string => '<link rel="stylesheet" href="'
+                .e(FilamentAsset::getStyleHref(SeoFilesServiceProvider::STYLESHEET, SeoFilesServiceProvider::PACKAGE)).'" />',
+            scopes: [SeoFilesPage::class, ListSitemapUrls::class, CreateSitemapUrl::class, EditSitemapUrl::class],
+        );
     }
 
     public function boot(Panel $panel): void {}

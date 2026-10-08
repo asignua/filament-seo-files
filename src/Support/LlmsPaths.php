@@ -28,8 +28,9 @@ final class LlmsPaths
     public static function for(string $kind, string $locale): string
     {
         // The form's select is only one layer of validation; the file writer must not trust
-        // its caller: `..`, `/` or `\` in a locale would take the path out of public/.
-        if (preg_match('~^[a-z]{2,3}([-_][A-Za-z]{2,4})?$~', $locale) !== 1) {
+        // its caller: `..`, `/` or `\` in a locale would take the path out of public/. BCP 47
+        // subtags (`es-419`, `zh-Hant-TW`) are fine; `\z`, because `$` accepts a trailing newline.
+        if (preg_match('~^[a-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*\z~', $locale) !== 1) {
             throw new InvalidArgumentException(sprintf('Invalid locale: %s', $locale));
         }
 

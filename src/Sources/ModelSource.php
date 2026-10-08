@@ -269,6 +269,12 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
 
     public function llmsSections(string $locale): iterable
     {
+        // A language this source does not serve has no URL for any record: skip the scan
+        // instead of reading the whole table to produce nothing.
+        if (!$this->servesLocale($locale)) {
+            return [];
+        }
+
         $links = [];
         $limit = $this->resolvedIndexLimit();
 
@@ -295,6 +301,10 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
 
     public function llmsDocuments(string $locale): iterable
     {
+        if (!$this->servesLocale($locale)) {
+            return;
+        }
+
         $count = 0;
 
         foreach ($this->records() as $record) {
@@ -362,6 +372,11 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
         } while ($records->count() === $this->chunk);
     }
 
+    private function servesLocale(string $locale): bool
+    {
+        return $this->locales === null || in_array($locale, $this->locales, true);
+    }
+
     /**
      * @return list<string>
      */
@@ -379,7 +394,7 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
             throw new InvalidArgumentException(sprintf('ModelSource for %s needs a url() callback.', $this->model));
         }
 
-        if ($this->locales !== null && !in_array($locale, $this->locales, true)) {
+        if (!$this->servesLocale($locale)) {
             return null;
         }
 
@@ -405,7 +420,14 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
             return (string) ($this->title)($record, $locale);
         }
 
-        return (string) ($record->getAttribute('title') ?? $record->getAttribute('name') ?? '');
+        // spatie-translatable answers in the CURRENT locale; ask for the file's one (falling
+        // back to another language rather than leaving a title empty).
+        $title = method_exists($record, 'getTranslation') && method_exists($record, 'isTranslatableAttribute') && $record->isTranslatableAttribute('title')
+            ? $record->getTranslation('title', $locale, true)
+            : $record->getAttribute('title');
+        $title ??= $record->getAttribute('name');
+
+        return is_string($title) || is_numeric($title) ? (string) $title : '';
     }
 
     /**
@@ -417,7 +439,10 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
             return null;
         }
 
-        $text = trim(strip_tags((string) ($this->description)($record, $locale)));
+        // The text is for AI agents as plain Markdown: decode entities (`&amp;`, `&nbsp;`)
+        // and turn no-break spaces into plain ones before the length is counted.
+        $text = html_entity_decode(strip_tags((string) ($this->description)($record, $locale)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
 
         return $text === ''
             ? null

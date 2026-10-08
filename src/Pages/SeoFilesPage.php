@@ -19,6 +19,7 @@ use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Date;
+use InvalidArgumentException;
 use UnitEnum;
 
 /**
@@ -137,7 +138,12 @@ class SeoFilesPage extends Page
         $times = [];
 
         foreach (SeoFiles::allLocales() as $locale) {
-            $path = $files->path($locale);
+            // One site locale that cannot name a file must not take the whole page down.
+            try {
+                $path = $files->path($locale);
+            } catch (InvalidArgumentException) {
+                continue;
+            }
 
             if (is_file($path)) {
                 $times[$locale] = (int) filemtime($path);
@@ -148,7 +154,7 @@ class SeoFilesPage extends Page
             return __('filament-seo-files::seo-files.page.not_generated');
         }
 
-        return __('filament-seo-files::seo-files.page.generated_at', ['time' => Date::createFromTimestamp(max($times))->isoFormat('LLL')])
+        return __('filament-seo-files::seo-files.page.generated_at', ['time' => Date::createFromTimestamp(max($times), (string) config('app.timezone'))->isoFormat('LLL')])
             .' · '.__('filament-seo-files::seo-files.page.llms_languages', ['locales' => implode(', ', array_keys($times))]);
     }
 

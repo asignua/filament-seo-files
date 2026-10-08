@@ -27,12 +27,22 @@ trait RunsArtisan
         }
 
         try {
-            Artisan::call($command, $parameters);
+            $exitCode = Artisan::call($command, $parameters);
             $output = trim(Artisan::output());
         } catch (Throwable $exception) {
             Notification::make()
                 ->title(__('filament-seo-files::seo-files.actions.failed'))
                 ->body($exception->getMessage())
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        if ($exitCode !== 0) {
+            Notification::make()
+                ->title(__('filament-seo-files::seo-files.actions.failed'))
+                ->body($output !== '' ? $output : null)
                 ->danger()
                 ->send();
 

@@ -76,6 +76,14 @@ class SitemapGenerator
      */
     public function generate(): array
     {
+        return PublicContext::exclusive('sitemap', fn (): array => PublicContext::run($this->build(...)));
+    }
+
+    /**
+     * @return array{sources: int, custom: int, skipped: int, path: string, chunks: int, urls: int}
+     */
+    private function build(): array
+    {
         $this->files = new SitemapFile;
         $this->seen = [];
         $this->parts = [];
