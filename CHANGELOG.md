@@ -2,6 +2,11 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
+## v1.0.3 - 2026-10-25
+
+- Screenshots and the cover carry the «made in asign» mark; README shows the Stand With Ukraine badge.
+- Dependency updates (CI actions, dev tooling).
+
 ## v1.0.2 - 2026-10-08
 
 - Fix: the plugin's stylesheet no longer declares generic utilities (`.flex`, `.text-sm`, `.text-gray-400`…). Linked after the panel's theme, they beat the theme's responsive and `dark:` variants on every panel page. The page and the form preview use `fi-seo-files-*` classes now, and the stylesheet is linked only on the plugin's own pages. Run `php artisan filament:assets` after upgrading.

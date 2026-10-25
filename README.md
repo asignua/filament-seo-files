@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/packagist/l/asignua/filament-seo-files.svg?style=flat-square)](https://github.com/asignua/filament-seo-files/blob/main/LICENSE.md)
 [![Plumb score](https://plumbphp.dev/badges/asignua/filament-seo-files/composite.svg)](https://plumbphp.dev/asignua/filament-seo-files)
 
-<img class="filament-hidden" src="https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.0/art/cover.jpg" alt="Filament SEO Files">
+<img class="filament-hidden" src="https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/cover.jpg" alt="Filament SEO Files">
 
 The files crawlers and AI agents read — `sitemap.xml`, `robots.txt`, `llms.txt` and `llms-full.txt` — generated
 from your own models and managed from a [Filament](https://filamentphp.com) panel.
@@ -40,25 +40,25 @@ without breaking your home page.
 
 The "SEO files" page: generate the sitemap and llms files, edit robots.txt.
 
-![The SEO files page](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.0/art/seo-files-page.jpg)
+![The SEO files page](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/seo-files-page.jpg)
 
-![The SEO files page, dark mode](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.0/art/seo-files-page-dark.jpg)
+![The SEO files page, dark mode](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/seo-files-page-dark.jpg)
 
 Manual "Sitemap URLs": pages no source knows about.
 
-![Sitemap URLs table](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.0/art/sitemap-urls.jpg)
+![Sitemap URLs table](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/sitemap-urls.jpg)
 
 One record is one multilingual URL, with a live preview of the final address.
 
-![Sitemap URL form](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.0/art/sitemap-url-form.jpg)
+![Sitemap URL form](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/sitemap-url-form.jpg)
 
 The generated `llms.txt`, editable per language.
 
-![llms.txt editor](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.0/art/llms-editor.jpg)
+![llms.txt editor](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/llms-editor.jpg)
 
 The generated `sitemap.xml` with reciprocal `hreflang` alternates and `x-default`.
 
-![Generated sitemap.xml](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.0/art/sitemap-xml.jpg)
+![Generated sitemap.xml](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/sitemap-xml.jpg)
 
 
 ## Requirements
