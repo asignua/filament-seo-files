@@ -143,4 +143,16 @@ class ImageSitemapTest extends TestCase
         $this->assertStringContainsString('https://site.test/landing', $this->sitemapXml());
         $this->assertStringNotContainsString('image:image', $this->sitemapXml());
     }
+
+    public function test_the_cap_cannot_exceed_googles_1000(): void
+    {
+        config(['filament-seo-files.sitemap.images.enabled' => true, 'filament-seo-files.sitemap.images.max_per_url' => 5000]);
+        $this->makePost('a');
+        SeoFiles::source(ModelSource::make(Post::class)->url(fn (Post $post, string $locale): string => 'https://site.test/p/'.$post->slug));
+        SeoFiles::imagesUsing(fn (SitemapEntry $entry): array => array_map(fn (int $i): string => '/i'.$i.'.jpg', range(1, 1200)));
+
+        $this->artisan('seo-files:sitemap');
+
+        $this->assertSame(1000, $this->xpath($this->sitemapXml())->query('//image:loc')->length);
+    }
 }

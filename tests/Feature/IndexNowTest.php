@@ -153,4 +153,54 @@ class IndexNowTest extends TestCase
 
         Http::assertSent(fn (Request $request): bool => $request['urlList'] === ['https://site.test/a']);
     }
+
+    public function test_foreign_hosts_do_not_look_changed_on_every_run(): void
+    {
+        $this->enable();
+        Bus::fake();
+        $this->makePost('a');
+        $this->registerPosts();
+        $this->manualUrl(['en' => 'https://elsewhere.test/landing']);
+
+        $this->artisan('seo-files:sitemap'); // baseline
+        $this->artisan('seo-files:sitemap');
+        $this->artisan('seo-files:sitemap');
+
+        Bus::assertNothingDispatched();
+        $this->assertArrayNotHasKey('https://elsewhere.test/landing', IndexNow::readState());
+    }
+
+    public function test_an_empty_run_does_not_write_a_baseline(): void
+    {
+        $this->enable();
+        Bus::fake();
+
+        $this->artisan('seo-files:sitemap'); // nothing to emit
+        $this->assertNull(IndexNow::readState());
+
+        $this->makePost('a');
+        $this->registerPosts();
+        $this->artisan('seo-files:sitemap'); // first real run = baseline, no ping
+
+        Bus::assertNothingDispatched();
+        $this->assertCount(1, IndexNow::readState());
+    }
+
+    public function test_manual_submit_does_not_stamp_the_throttle_and_the_ttl_follows_it(): void
+    {
+        $this->enable(['throttle_seconds' => 200000]);
+        Bus::fake();
+
+        IndexNow::submit(['https://site.test/a']);
+        $this->assertNull(Cache::get('filament-seo-files:indexnow:last'));
+
+        $this->makePost('a');
+        $this->registerPosts();
+        $this->artisan('seo-files:sitemap'); // baseline
+        $this->makePost('b');
+        $this->artisan('seo-files:sitemap'); // stamps
+
+        $this->travel(2)->days();
+        $this->assertNotNull(Cache::get('filament-seo-files:indexnow:last'));
+    }
 }

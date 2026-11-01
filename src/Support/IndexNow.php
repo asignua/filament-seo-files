@@ -69,6 +69,21 @@ final class IndexNow
             return 0;
         }
 
+        // Foreign hosts (an external landing page among the manual URLs) can never be pinged:
+        // leave them out of change detection, or they would look changed on every run.
+        $host = self::host();
+        $current = array_filter(
+            $current,
+            static fn (string $url): bool => parse_url($url, PHP_URL_HOST) === $host,
+            ARRAY_FILTER_USE_KEY,
+        );
+
+        // Nothing emitted (an emptied source, a failed query): not a baseline. Recording it
+        // would make the next normal run look like a first full change.
+        if ($current === []) {
+            return 0;
+        }
+
         $state = self::readState();
 
         if ($state === null) {
@@ -157,7 +172,11 @@ final class IndexNow
             return 0;
         }
 
-        Cache::put('filament-seo-files:indexnow:last', time(), now()->addDay());
+        // Only the automatic path is throttled, so only it stamps; a manual submit must not
+        // delay the next scheduled ping. The TTL follows the throttle window.
+        if ($record) {
+            Cache::put('filament-seo-files:indexnow:last', time(), now()->addSeconds(max(60, (int) config('filament-seo-files.indexnow.throttle_seconds', 3600)) + 60));
+        }
 
         foreach (array_chunk($urls, self::MAX_PER_REQUEST, true) as $chunk) {
             $job = new PingIndexNow(array_keys($chunk), $record ? $chunk : []);

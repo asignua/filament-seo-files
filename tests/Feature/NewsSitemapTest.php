@@ -134,4 +134,14 @@ class NewsSitemapTest extends TestCase
         $this->assertSame(['en', 'uk'], $langs);
         $this->assertSame('The Site', $news->query('//news:name')->item(0)->textContent);
     }
+
+    public function test_turning_news_off_removes_the_stale_file(): void
+    {
+        File::put($this->publicPath.'/sitemap-news.xml', 'stale');
+        $this->source([['a', 'A', now()]]);
+
+        $this->artisan('seo-files:sitemap');
+
+        $this->assertFileDoesNotExist($this->publicPath.'/sitemap-news.xml');
+    }
 }

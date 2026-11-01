@@ -328,7 +328,7 @@ class SitemapGenerator
         }
 
         /** @var list<mixed> $raw */
-        $max = max(1, (int) config('filament-seo-files.sitemap.images.max_per_url', 1000));
+        $max = min(1000, max(1, (int) config('filament-seo-files.sitemap.images.max_per_url', 1000)));
         $images = [];
 
         foreach ($raw as $image) {
@@ -414,11 +414,15 @@ class SitemapGenerator
     {
         $this->newsWritten = 0;
 
+        $path = $this->files->newsPath();
+
+        // Switched off: a file of an earlier run must not stay publicly reachable.
         if (!$this->newsEnabled()) {
+            File::delete($path);
+
             return null;
         }
 
-        $path = $this->files->newsPath();
         $items = $this->newsItems;
         usort($items, static fn (array $a, array $b): int => $b['news']->publishedAt <=> $a['news']->publishedAt);
         $items = array_slice($items, 0, max(1, (int) config('filament-seo-files.sitemap.news.max_urls', 1000)));
