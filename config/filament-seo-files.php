@@ -52,6 +52,36 @@ return [
         // A part is closed early when its estimated XML size reaches this many bytes
         // (the protocol limit is 52 428 800).
         'max_bytes' => 45000000,
+
+        // Image sitemap: <image:image><image:loc> inside each <url> (Google's current spec;
+        // caption, title, geo_location and license are deprecated and never written).
+        // Images come from the source entries (ModelSource::images(), the HasSitemapImages
+        // interface, SitemapEntry::$images), from SeoFiles::imagesUsing(), and for manual
+        // URLs from their `images` column (run the add_images migration to get it).
+        'images' => [
+            // Off by default.
+            'enabled' => false,
+
+            // Google reads up to 1 000 images per <url>.
+            'max_per_url' => 1000,
+        ],
+
+        // News sitemap: a separate file with <news:news> for the articles published in the
+        // last `max_age_days` days, listed in the sitemap index (turning this on makes
+        // sitemap.xml an index). Items come from SitemapEntry::$news / ModelSource::news().
+        'news' => [
+            // Off by default.
+            'enabled' => false,
+
+            // Written next to sitemap.xml.
+            'file' => 'sitemap-news.xml',
+
+            // Google asks for articles of the last two days only.
+            'max_age_days' => 2,
+
+            // At most 1 000 <news:news> per file (the newest are kept).
+            'max_urls' => 1000,
+        ],
     ],
 
     // robots.txt.
@@ -94,6 +124,35 @@ return [
         // Middleware of those routes. Empty by default: the `web` group would start a
         // session and set cookies on a plain text file, so a CDN could not cache it.
         'middleware' => [],
+    ],
+
+    // IndexNow: tells Bing, Yandex & co which URLs changed. Off by default.
+    'indexnow' => [
+        // Off by default.
+        'enabled' => false,
+
+        // 8–128 characters of a-z, A-Z, 0-9 and "-". The plugin serves it at /{key}.txt.
+        'key' => null,
+
+        // Where the key file is reachable; null = {base URL}/{key}.txt.
+        'key_location' => null,
+
+        // api.indexnow.org forwards to every participating engine; use
+        // https://www.bing.com/indexnow or https://yandex.com/indexnow to talk to one.
+        'endpoint' => 'https://api.indexnow.org/indexnow',
+
+        // Ping the changed URLs after every seo-files:sitemap run.
+        'on_generate' => true,
+
+        // The first run only records a baseline; true pings the whole site once.
+        'ping_initial' => false,
+
+        // At most one automatic ping per this many seconds (changes wait for the next run).
+        'throttle_seconds' => 3600,
+
+        // Queue connection / name of the ping job; null = the defaults.
+        'connection' => null,
+        'queue' => null,
     ],
 
     // Scheduled generation.

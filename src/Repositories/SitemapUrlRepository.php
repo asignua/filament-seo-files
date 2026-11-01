@@ -9,6 +9,7 @@ use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\SitemapLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Writes the manual sitemap URLs — the ONLY door for writes (the model has
@@ -92,9 +93,58 @@ class SitemapUrlRepository
             $sitemapUrl->active = (bool) $data['active'];
         }
 
+        // The optional column: without it (the migration is not run, or the host has its
+        // own table) the value is ignored rather than failing the save.
+        if (array_key_exists('images', $data) && self::hasImagesColumn()) {
+            $sitemapUrl->images = $this->images($data['images']);
+        }
+
         $sitemapUrl->save();
 
         return $sitemapUrl;
+    }
+
+    private static ?bool $imagesColumn = null;
+
+    private static ?string $imagesColumnTable = null;
+
+    /**
+     * Does the table have the optional `images` column? Cached per table name.
+     */
+    public static function hasImagesColumn(): bool
+    {
+        $table = (string) config('filament-seo-files.tables.sitemap_urls', 'seo_sitemap_urls');
+
+        if (self::$imagesColumn === null || self::$imagesColumnTable !== $table) {
+            self::$imagesColumnTable = $table;
+            self::$imagesColumn = Schema::hasColumn($table, 'images');
+        }
+
+        return self::$imagesColumn;
+    }
+
+    /**
+     * Forgets the cached column check (for tests and after the migration runs).
+     */
+    public static function forgetImagesColumn(): void
+    {
+        self::$imagesColumn = null;
+        self::$imagesColumnTable = null;
+    }
+
+    /**
+     * One URL per line (the form) or a list.
+     *
+     * @return list<string>
+     */
+    private function images(mixed $value): array
+    {
+        $lines = is_array($value) ? $value : (preg_split('/\R/u', (string) $value) ?: []);
+
+        return array_values(array_unique(array_filter(
+            array_map(static fn (mixed $line): string => trim((string) $line), $lines),
+            static fn (string $line): bool => $line !== '',
+        )));
     }
 
     /**

@@ -7,8 +7,11 @@ namespace Asignua\FilamentSeoFiles;
 use Asignua\FilamentSeoFiles\Contracts\LlmsFullSource;
 use Asignua\FilamentSeoFiles\Contracts\LlmsIndexSource;
 use Asignua\FilamentSeoFiles\Contracts\SitemapSource;
+use Asignua\FilamentSeoFiles\Data\SitemapEntry;
+use Asignua\FilamentSeoFiles\Http\Controllers\IndexNowKeyController;
 use Asignua\FilamentSeoFiles\Http\Controllers\LlmsController;
 use Asignua\FilamentSeoFiles\Http\Controllers\LlmsFullController;
+use Asignua\FilamentSeoFiles\Support\IndexNow;
 use Closure;
 use Illuminate\Support\Facades\Route;
 use InvalidArgumentException;
@@ -49,11 +52,15 @@ final class SeoFiles
 
     private static ?Closure $robotsTemplate = null;
 
+    private static ?Closure $images = null;
+
     /** @var list<object> */
     private static array $sources = [];
 
     /** The application the routes were registered for (a test process boots many). */
     private static ?object $routesRegisteredFor = null;
+
+    private static ?object $indexNowRouteFor = null;
 
     /**
      * The site's base URL (scheme + host, no trailing slash). A scheduler has no request,
@@ -145,6 +152,31 @@ final class SeoFiles
     }
 
     /**
+     * The images of a page for the image sitemap (`sitemap.images.enabled`), asked for every
+     * entry that carries none itself — a source's entry, or a manual URL (its stored images
+     * are on the entry already). Return absolute URLs or paths from the site root.
+     *
+     * @param Closure(SitemapEntry): iterable<string> $resolver
+     */
+    public static function imagesUsing(Closure $resolver): void
+    {
+        self::$images = $resolver;
+    }
+
+    /**
+     * @return iterable<string>
+     */
+    public static function imagesFor(SitemapEntry $entry): iterable
+    {
+        return self::$images !== null ? (self::$images)($entry) : [];
+    }
+
+    public static function hasImageResolver(): bool
+    {
+        return self::$images !== null;
+    }
+
+    /**
      * Registers a page source. It may implement any subset of {@see SitemapSource},
      * {@see LlmsIndexSource} and {@see LlmsFullSource}.
      */
@@ -178,6 +210,8 @@ final class SeoFiles
      */
     public static function routes(): void
     {
+        self::indexNowRoute();
+
         $prefixed = self::prefixedLocales();
 
         if ($prefixed === [] || self::$routesRegisteredFor === app()) {
@@ -207,6 +241,25 @@ final class SeoFiles
     }
 
     /**
+     * `/{key}.txt` — the IndexNow key file, when IndexNow is on and the key is valid.
+     */
+    private static function indexNowRoute(): void
+    {
+        if (self::$indexNowRouteFor === app() || !IndexNow::enabled() || !IndexNow::validKey()) {
+            return;
+        }
+
+        self::$indexNowRouteFor = app();
+
+        /** @var list<string> $middleware */
+        $middleware = (array) config('filament-seo-files.routes.middleware', []);
+
+        Route::middleware($middleware)
+            ->get('/'.IndexNow::key().'.txt', IndexNowKeyController::class)
+            ->name('seo-files.indexnow-key');
+    }
+
+    /**
      * Forgets everything configured (for tests).
      */
     public static function flush(): void
@@ -222,8 +275,10 @@ final class SeoFiles
         self::$siteName = null;
         self::$description = null;
         self::$robotsTemplate = null;
+        self::$images = null;
         self::$sources = [];
         self::$routesRegisteredFor = null;
+        self::$indexNowRouteFor = null;
     }
 
     public static function baseUrl(): string

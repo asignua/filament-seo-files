@@ -22,6 +22,8 @@ return [
         'language' => 'Sprache',
         'title' => 'Titel',
         'title_help' => 'Nur eine Bezeichnung für den Admin-Bereich; sie gelangt nicht in die Sitemap.',
+        'images' => 'Bilder',
+        'images_help' => 'Eine Bild-URL pro Zeile (absolut oder Pfad ab der Wurzel). Sie gelangen in die Bild-Sitemap.',
         'url' => 'Adresse',
         'url_help' => 'Ein Pfad ab der Website-Wurzel ohne Sprachpräfix (search, feeds/news) oder eine vollständige Adresse mit https://.',
         'active' => 'Aktiv',

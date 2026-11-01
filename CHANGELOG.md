@@ -2,6 +2,14 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
+## v1.1.0 - 2026-11-01
+
+All new features are opt-in and off by default; nothing changes for an existing site.
+
+- **Image sitemap** (`sitemap.images.enabled`): `<image:image><image:loc>` inside each `<url>`, per Google's current spec (the deprecated `caption`, `title`, `geo_location` and `license` are never written; at most 1 000 images per URL). Images come from `SitemapEntry::$images`, `ModelSource::images(fn ($model) => …)`, a model implementing `Contracts\HasSitemapImages`, or the global `SeoFiles::imagesUsing(fn (SitemapEntry $entry) => …)` for entries that carry none. Relative paths get the base URL; duplicates are dropped. Manual sitemap URLs carry images too: publish and run the new optional `add_images_to_seo_sitemap_urls_table` migration and the form gets an "Images" field (one URL per line); without the column nothing changes.
+- **News sitemap** (`sitemap.news.enabled`): a separate `sitemap-news.xml` with `<news:news>` (publication name, language, title, publication date) for the articles published in the last two days, newest first, at most 1 000, listed in the sitemap index (enabling it turns `sitemap.xml` into an index). Items come from `SitemapEntry::$news` (a `Data\SitemapNews`, or `locale => SitemapNews`) or `ModelSource::news(fn ($model, $locale) => …)`. An empty file is removed. The language is the ISO 639 code Google expects (`zh-cn`/`zh-tw` for Chinese).
+- **IndexNow** (`indexnow.enabled`, `indexnow.key`): the key file is served at `/{key}.txt`, and after `seo-files:sitemap` the URLs that are new or whose `<lastmod>` changed are pinged to `api.indexnow.org` by a queued job (`indexnow.connection`/`queue`), at most once per `indexnow.throttle_seconds` (throttled changes wait for the next run), up to 10 000 URLs per request, retried on 429/5xx. The first run only records a baseline (`indexnow.ping_initial` pings the whole site). On demand: `php artisan seo-files:indexnow <url>… [--now]`. Pitfalls kept intact: sources first, the `$seen` href map, no `priority`/`changefreq`.
+
 ## v1.0.3 - 2026-10-25
 
 - Screenshots and the cover carry the «made in asign» mark; README shows the Stand With Ukraine badge.

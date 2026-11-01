@@ -25,6 +25,9 @@ without breaking your home page.
 - [Custom sources](#custom-sources)
 - [Manual sitemap URLs](#manual-sitemap-urls)
 - [Large sites: the sitemap index](#large-sites-the-sitemap-index)
+- [Image sitemap](#image-sitemap)
+- [News sitemap](#news-sitemap)
+- [IndexNow](#indexnow)
 - [robots.txt](#robotstxt)
 - [llms.txt and llms-full.txt](#llmstxt-and-llms-fulltxt)
 - [Scheduling](#scheduling)
@@ -267,6 +270,71 @@ did not write are deleted (only files that match `chunk_name`, only next to `sit
 a temporary file and renamed, so a crawler never sees a half-written index. `robots.txt` and `llms.txt` keep pointing
 at `sitemap.xml`.
 
+## Image sitemap
+
+Opt-in (`'sitemap' => ['images' => ['enabled' => true]]`). Every `<url>` gets `<image:image><image:loc>` entries, which
+is all Google's current spec has (`caption`, `title`, `geo_location` and `license` are deprecated and never written;
+at most 1 000 images per URL, `sitemap.images.max_per_url`). Tell the plugin the images of a page in whichever way fits:
+
+```php
+// a ModelSource
+ModelSource::make(Post::class)->images(fn (Post $post) => [$post->cover_url, ...$post->gallery_urls]);
+
+// or the model itself
+class Post extends Model implements \Asignua\FilamentSeoFiles\Contracts\HasSitemapImages
+{
+    public function sitemapImages(): iterable { return [$this->cover_url]; }
+}
+
+// or one resolver for every entry that carries no images (also manual URLs)
+SeoFiles::imagesUsing(fn (SitemapEntry $entry): iterable => Image::forUrl($entry->url));
+
+// a custom SitemapSource: new SitemapEntry($url, $alternates, $lastmod, images: [...])
+```
+
+Paths starting with `/` get the base URL; duplicates are dropped. The images are written into every language version of
+the page. **Manual sitemap URLs** can carry images too: publish and run the optional migration
+`add_images_to_seo_sitemap_urls_table` and the form shows an "Images" field (one URL per line). Without the column nothing
+changes (and a subclassed model with its own table is unaffected).
+
+## News sitemap
+
+Opt-in (`'sitemap' => ['news' => ['enabled' => true]]`). A separate file, `sitemap-news.xml` next to `sitemap.xml`, lists
+the articles published in the last `news.max_age_days` (2) days — newest first, at most `news.max_urls` (1 000) — with
+`<news:news>` (publication name, language, title, publication date). It is listed in the sitemap index, so enabling it
+turns `sitemap.xml` into an index; with nothing recent the file is removed and left out of the index.
+
+```php
+ModelSource::make(Post::class)->news(fn (Post $post, string $locale) => $post->is_news
+    ? new SitemapNews($post->title, $post->published_at)   // publication = SeoFiles::siteName(), language = the locale
+    : null);
+
+// a custom source: new SitemapEntry($url, $alternates, news: new SitemapNews('Headline', $publishedAt, 'My Paper', 'en'))
+//                  or news: ['en' => new SitemapNews(…), 'uk' => new SitemapNews(…)]
+```
+
+Use the ORIGINAL publication time, not the edit time. The language is the ISO 639 code Google expects (`zh-cn` / `zh-tw`
+for Chinese).
+
+## IndexNow
+
+Opt-in and off by default. Pings Bing, Yandex and the other IndexNow engines about changed URLs instead of waiting for
+them to read the sitemap.
+
+```php
+'indexnow' => ['enabled' => true, 'key' => env('INDEXNOW_KEY')],   // 8–128 characters of a-z A-Z 0-9 -
+```
+
+The plugin serves the key file at `/{key}.txt` (with `routes.register` off, `SeoFiles::routes()` registers it, before your
+catch-all). After every `seo-files:sitemap` run the URLs that are new or whose `<lastmod>` changed since the last ping go
+to a queued job (`indexnow.connection` / `indexnow.queue`) — at most one automatic ping per `indexnow.throttle_seconds`
+(3600; throttled changes simply wait for the next run), up to 10 000 URLs per request, retried on 429/5xx. The first run
+only records a baseline; `indexnow.ping_initial` pings the whole site once. A source that gives no `lastModified` is
+pinged once, when its URL first appears. Pick another engine with `indexnow.endpoint`.
+
+On demand: `php artisan seo-files:indexnow https://example.com/a https://example.com/b [--now]` (only URLs of the site's
+host are sent; `--now` skips the queue), or `Asignua\FilamentSeoFiles\Support\IndexNow::submit($urls)`.
+
 ## robots.txt
 
 `RobotsFile` reads and writes `public/robots.txt`. Until the file exists the recommended template is served by the editor:
@@ -363,7 +431,8 @@ $panel->plugin(SeoFilesPlugin::make()
 
 | Command | |
 | --- | --- |
-| `php artisan seo-files:sitemap` | writes `sitemap.xml` (and the parts of an index) |
+| `php artisan seo-files:sitemap` | writes `sitemap.xml` (and the parts of an index, and the news sitemap) |
+| `php artisan seo-files:indexnow [urls…] [--now]` | pings IndexNow about the given URLs (no argument: checks the setup) |
 | `php artisan seo-files:llms` | writes `llms.txt` and `llms-full.txt` for every language |
 | `php artisan seo-files:llms --locale=uk --locale=en` | only these languages |
 
@@ -397,7 +466,7 @@ editor changes are replaced, and with the schedule on both llms actions name the
 ## Configuration
 
 `config/filament-seo-files.php` — tables, models, the sitemap/robots/llms paths (all default to `public_path()`
-and are resolved at run time), the sitemap index limits, `routes.register` and `routes.middleware`, the schedule, and
+and are resolved at run time), the sitemap index limits, the `images`, `news` and `indexnow` options, `routes.register` and `routes.middleware`, the schedule, and
 the `llms` description and index limits. Closures (sources, base URL, languages) cannot live in a cacheable config file and are set on the `SeoFiles`
 registry instead.
 

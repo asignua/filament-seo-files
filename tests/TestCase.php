@@ -41,6 +41,7 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         SeoFiles::flush();
+        SitemapUrlRepository::forgetImagesColumn();
 
         $this->publicPath = sys_get_temp_dir().'/seo-files-public-'.uniqid();
         File::ensureDirectoryExists($this->publicPath);

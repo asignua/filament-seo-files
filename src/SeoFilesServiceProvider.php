@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles;
 
+use Asignua\FilamentSeoFiles\Commands\IndexNowCommand;
 use Asignua\FilamentSeoFiles\Commands\LlmsCommand;
 use Asignua\FilamentSeoFiles\Commands\SitemapCommand;
 use Asignua\FilamentSeoFiles\Repositories\SitemapUrlRepository;
@@ -29,8 +30,8 @@ class SeoFilesServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasTranslations()
-            ->hasMigration('create_seo_sitemap_urls_table')
-            ->hasCommands([SitemapCommand::class, LlmsCommand::class]);
+            ->hasMigrations(['create_seo_sitemap_urls_table', 'add_images_to_seo_sitemap_urls_table'])
+            ->hasCommands([SitemapCommand::class, LlmsCommand::class, IndexNowCommand::class]);
     }
 
     public function packageRegistered(): void

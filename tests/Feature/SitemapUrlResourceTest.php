@@ -11,6 +11,7 @@ use Asignua\FilamentSeoFiles\Resources\SitemapUrls\Pages\EditSitemapUrl;
 use Asignua\FilamentSeoFiles\Resources\SitemapUrls\Pages\ListSitemapUrls;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 /**
@@ -230,5 +231,26 @@ class SitemapUrlResourceTest extends TestCase
         Livewire::test(ListSitemapUrls::class)
             ->assertTableActionExists('edit', record: $row)
             ->assertTableActionExists('delete', record: $row);
+    }
+
+    public function test_the_images_field_appears_only_with_the_feature_and_the_column(): void
+    {
+        config(['filament-seo-files.sitemap.images.enabled' => true]);
+        SitemapUrlRepository::forgetImagesColumn();
+        Livewire::test(CreateSitemapUrl::class)->assertFormFieldIsHidden('images');
+
+        Schema::table('seo_sitemap_urls', fn ($table) => $table->json('images')->nullable());
+        SitemapUrlRepository::forgetImagesColumn();
+
+        Livewire::test(CreateSitemapUrl::class)
+            ->assertFormFieldIsVisible('images')
+            ->fillForm(['url' => ['en' => 'landing'], 'images' => "/a.jpg\nhttps://cdn.test/b.jpg"])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(['/a.jpg', 'https://cdn.test/b.jpg'], SitemapUrl::query()->firstOrFail()->images);
+
+        config(['filament-seo-files.sitemap.images.enabled' => false]);
+        Livewire::test(CreateSitemapUrl::class)->assertFormFieldIsHidden('images');
     }
 }

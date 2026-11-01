@@ -67,6 +67,17 @@ class SitemapFile
         return str_contains($name, '{n}') && basename($name) === $name ? $name : self::DEFAULT_CHUNK_NAME;
     }
 
+    /**
+     * The news sitemap, next to sitemap.xml. A fixed name, so it never matches the part
+     * template (`sitemap-{n}.xml`) and the stale-part cleanup cannot touch it.
+     */
+    public function newsPath(): string
+    {
+        $name = (string) config('filament-seo-files.sitemap.news.file', 'sitemap-news.xml');
+
+        return dirname($this->path()).'/'.(basename($name) === $name && $name !== '' ? $name : 'sitemap-news.xml');
+    }
+
     public function chunkPath(int $number): string
     {
         return dirname($this->path()).'/'.str_replace('{n}', (string) $number, $this->chunkName());

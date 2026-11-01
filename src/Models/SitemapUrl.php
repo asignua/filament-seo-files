@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Asignua\FilamentSeoFiles\Models;
 
 use Asignua\FilamentSeoFiles\Casts\LocaleMap;
+use Asignua\FilamentSeoFiles\Casts\UrlList;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, string> $url
  * @property array<string, string> $title
  * @property bool                  $active
+ * @property list<string>|null      $images  optional column (the add_images migration): image URLs for the image sitemap
  * @property Carbon|null           $created_at
  * @property Carbon|null           $updated_at
  */
@@ -49,6 +51,7 @@ class SitemapUrl extends Model
             'url' => LocaleMap::class,
             'title' => LocaleMap::class,
             'active' => 'boolean',
+            'images' => UrlList::class,
         ];
     }
 

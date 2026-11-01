@@ -22,6 +22,8 @@ return [
         'language' => 'Język',
         'title' => 'Tytuł',
         'title_help' => 'Etykieta tylko dla panelu; nie trafia do mapy witryny.',
+        'images' => 'Obrazy',
+        'images_help' => 'Jeden adres obrazu w wierszu (bezwzględny lub ścieżka od korzenia). Trafiają do mapy witryny obrazów.',
         'url' => 'Adres',
         'url_help' => 'Ścieżka od katalogu głównego witryny bez prefiksu języka (search, feeds/news) lub pełny adres z https://.',
         'active' => 'Aktywny',

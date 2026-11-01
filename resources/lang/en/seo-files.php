@@ -22,6 +22,8 @@ return [
         'language' => 'Language',
         'title' => 'Title',
         'title_help' => 'A label for the admin only; it does not reach the sitemap.',
+        'images' => 'Images',
+        'images_help' => 'One image URL per line (absolute, or a path from the site root). They go into the image sitemap.',
         'url' => 'Address',
         'url_help' => 'A path from the site root without the language prefix (search, feeds/news), or a full address with https://.',
         'active' => 'Active',

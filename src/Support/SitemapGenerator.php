@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Support;
 
+use Asignua\FilamentSeoFiles\Data\SitemapEntry;
+use Asignua\FilamentSeoFiles\Data\SitemapNews;
 use Asignua\FilamentSeoFiles\Models\SitemapUrl;
 use Asignua\FilamentSeoFiles\Repositories\SitemapUrlRepository;
 use Asignua\FilamentSeoFiles\SeoFiles;
@@ -13,6 +15,8 @@ use Spatie\Sitemap\Sitemap;
 use Spatie\Sitemap\SitemapIndex;
 use Spatie\Sitemap\Tags\Sitemap as SitemapTag;
 use Spatie\Sitemap\Tags\Url;
+use Stringable;
+use Throwable;
 
 /**
  * Generates `sitemap.xml` (hreflang + lastmod) from TWO places:
@@ -64,12 +68,20 @@ class SitemapGenerator
 
     private int $totalUrls = 0;
 
+    private int $newsWritten = 0;
+
     private string $mode = 'auto';
+
+    /** @var list<array{url: string, news: SitemapNews, locale: string}> */
+    private array $newsItems = [];
+
+    /** @var array<string, string> url => change signature, collected only for IndexNow */
+    private array $emitted = [];
 
     private SitemapFile $files;
 
     /**
-     * @return array{sources: int, custom: int, skipped: int, path: string, chunks: int, urls: int}
+     * @return array{sources: int, custom: int, skipped: int, path: string, chunks: int, urls: int, news: int}
      *
      * `sources` and `custom` count pages (hreflang clusters); `urls` counts the `<url>`
      * entries written — one per language version.
@@ -80,7 +92,7 @@ class SitemapGenerator
     }
 
     /**
-     * @return array{sources: int, custom: int, skipped: int, path: string, chunks: int, urls: int}
+     * @return array{sources: int, custom: int, skipped: int, path: string, chunks: int, urls: int, news: int}
      */
     private function build(): array
     {
@@ -88,6 +100,8 @@ class SitemapGenerator
         $this->seen = [];
         $this->parts = [];
         $this->totalUrls = 0;
+        $this->newsItems = [];
+        $this->emitted = [];
         $this->mode = $this->splitMode();
         $this->resetBuffer();
 
@@ -97,12 +111,17 @@ class SitemapGenerator
         $path = $this->files->path();
         File::ensureDirectoryExists(dirname($path));
 
-        if ($this->parts === [] && $this->mode !== 'always') {
+        $newsPath = $this->writeNews();
+        $newsCount = $newsPath === null ? 0 : $this->newsWritten;
+
+        // The news sitemap is listed in the index, so enabling it turns sitemap.xml into one.
+        if ($this->parts === [] && $this->mode !== 'always' && !$this->newsEnabled()) {
             // Everything fits: one plain sitemap.xml, and no parts of an earlier index run.
             $this->writeAtomically($path, $this->buffer->render());
             $this->deleteStaleParts([]);
+            $this->notifyIndexNow();
 
-            return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => 0, 'urls' => $this->totalUrls];
+            return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => 0, 'urls' => $this->totalUrls, 'news' => 0];
         }
 
         // The last, partly filled buffer is a part as well (an empty one only when nothing
@@ -122,12 +141,17 @@ class SitemapGenerator
             $written[] = $part['path'];
         }
 
+        if ($newsPath !== null) {
+            $index->add(SitemapTag::create($this->files->urlFor($newsPath))->setLastModificationDate(now()));
+        }
+
         // The index goes last: a crawler that fetches sitemap.xml in the middle of a run
         // still sees a complete previous set, never an index that points at missing parts.
         $this->writeAtomically($path, $index->render());
         $this->deleteStaleParts($written);
+        $this->notifyIndexNow();
 
-        return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => count($this->parts), 'urls' => $this->totalUrls];
+        return ['sources' => $fromSources, 'custom' => $custom, 'skipped' => $skipped, 'path' => $path, 'chunks' => count($this->parts), 'urls' => $this->totalUrls, 'news' => $newsCount];
     }
 
     /**
@@ -157,7 +181,14 @@ class SitemapGenerator
                     $alternates[(string) $locale] = $href;
                 }
 
-                $this->pushCluster($entry->url, $alternates, $entry->lastModified ?? now());
+                $this->pushCluster(
+                    $entry->url,
+                    $alternates,
+                    $entry->lastModified ?? now(),
+                    $this->imagesFor($entry),
+                    (string) ($entry->lastModified?->getTimestamp() ?? 0),
+                );
+                $this->collectNews($entry);
                 $count++;
             }
         }
@@ -206,7 +237,13 @@ class SitemapGenerator
                     fn (string $href): bool => $href === $loc || !isset($this->seen[$href]),
                 );
 
-                $this->pushCluster($loc, $alternates, $row->updated_at ?? now());
+                $this->pushCluster(
+                    $loc,
+                    $alternates,
+                    $row->updated_at ?? now(),
+                    $this->imagesFor(new SitemapEntry($loc, $alternates, $row->updated_at, $this->manualImages($row))),
+                    (string) ($row->updated_at?->getTimestamp() ?? 0),
+                );
                 $count++;
             }
         });
@@ -221,8 +258,9 @@ class SitemapGenerator
      * NO setPriority / setChangeFrequency (Google ignores them).
      *
      * @param array<string, string> $alternates locale => absolute address
+     * @param list<string>          $images     absolute image URLs, written into every `<url>` of the cluster
      */
-    private function pushCluster(string $default, array $alternates, DateTimeInterface $lastModified): void
+    private function pushCluster(string $default, array $alternates, DateTimeInterface $lastModified, array $images = [], string $signature = '0'): void
     {
         $hrefs = array_values(array_unique([$default, ...array_values($alternates)]));
         $urls = [];
@@ -242,14 +280,206 @@ class SitemapGenerator
 
             $url->addAlternate($default, 'x-default');
 
+            foreach ($images as $image) {
+                $url->addImage($image);
+            }
+
             $urls[] = $url;
+
+            if (IndexNow::enabled()) {
+                $this->emitted[$href] = $signature;
+            }
         }
 
         foreach ($hrefs as $href) {
             $this->seen[$href] = true;
         }
 
-        $this->push($urls, $this->estimateBytes($default, $alternates) * count($urls), $lastModified);
+        $this->push($urls, ($this->estimateBytes($default, $alternates) + $this->imageBytes($images)) * count($urls), $lastModified);
+    }
+
+    private function imagesEnabled(): bool
+    {
+        return (bool) config('filament-seo-files.sitemap.images.enabled', false);
+    }
+
+    private function newsEnabled(): bool
+    {
+        return (bool) config('filament-seo-files.sitemap.news.enabled', false);
+    }
+
+    /**
+     * The images of an entry as absolute, unique URLs (at most `images.max_per_url`):
+     * the entry's own, or what `SeoFiles::imagesUsing()` supplies for an entry with none.
+     *
+     * @return list<string>
+     */
+    private function imagesFor(SitemapEntry $entry): array
+    {
+        if (!$this->imagesEnabled()) {
+            return [];
+        }
+
+        $raw = is_array($entry->images) ? $entry->images : iterator_to_array($entry->images, false);
+
+        if ($raw === [] && SeoFiles::hasImageResolver()) {
+            $resolved = SeoFiles::imagesFor($entry);
+            $raw = is_array($resolved) ? $resolved : iterator_to_array($resolved, false);
+        }
+
+        /** @var list<mixed> $raw */
+        $max = max(1, (int) config('filament-seo-files.sitemap.images.max_per_url', 1000));
+        $images = [];
+
+        foreach ($raw as $image) {
+            if (!is_string($image) && !$image instanceof Stringable) {
+                continue;
+            }
+
+            $image = trim((string) $image);
+
+            if ($image === '') {
+                continue;
+            }
+
+            $image = SitemapLocation::isAbsolute($image) ? $image : SeoFiles::baseUrl().'/'.ltrim($image, '/');
+            $images[$image] = $image;
+
+            if (count($images) >= $max) {
+                break;
+            }
+        }
+
+        return array_values($images);
+    }
+
+    /**
+     * The stored images of a manual URL (the optional `images` column).
+     *
+     * @return list<string>
+     */
+    private function manualImages(SitemapUrl $row): array
+    {
+        $stored = $row->getAttribute('images');
+
+        return is_array($stored) ? array_values(array_filter($stored, is_string(...))) : [];
+    }
+
+    /**
+     * @param list<string> $images
+     */
+    private function imageBytes(array $images): int
+    {
+        $bytes = 0;
+
+        foreach ($images as $image) {
+            $bytes += strlen($image) + 60;
+        }
+
+        return $bytes;
+    }
+
+    /**
+     * Remembers the news items of an entry that was just emitted. Only the last
+     * `news.max_age_days` days are kept, and the newest `news.max_urls` of them.
+     */
+    private function collectNews(SitemapEntry $entry): void
+    {
+        if (!$this->newsEnabled() || $entry->news === null) {
+            return;
+        }
+
+        $items = $entry->news instanceof SitemapNews
+            ? [SeoFiles::defaultLocale() => $entry->news]
+            : $entry->news;
+        $oldest = now()->subDays(max(1, (int) config('filament-seo-files.sitemap.news.max_age_days', 2)));
+
+        foreach ($items as $locale => $news) {
+            // The page of that language; a single item without a language is the default one.
+            $url = $entry->alternates[(string) $locale] ?? ($locale === SeoFiles::defaultLocale() ? $entry->url : null);
+
+            if ($url === null || $news->publishedAt < $oldest || $news->title === '') {
+                continue;
+            }
+
+            $this->newsItems[] = ['url' => $url, 'news' => $news, 'locale' => (string) $locale];
+        }
+    }
+
+    /**
+     * Writes `sitemap-news.xml`; null when there is nothing to list (an empty file is not
+     * written, and the one of an earlier run is removed).
+     */
+    private function writeNews(): ?string
+    {
+        $this->newsWritten = 0;
+
+        if (!$this->newsEnabled()) {
+            return null;
+        }
+
+        $path = $this->files->newsPath();
+        $items = $this->newsItems;
+        usort($items, static fn (array $a, array $b): int => $b['news']->publishedAt <=> $a['news']->publishedAt);
+        $items = array_slice($items, 0, max(1, (int) config('filament-seo-files.sitemap.news.max_urls', 1000)));
+
+        if ($items === []) {
+            File::delete($path);
+
+            return null;
+        }
+
+        $sitemap = Sitemap::create();
+        $seen = [];
+
+        foreach ($items as $item) {
+            if (isset($seen[$item['url']])) {
+                continue;
+            }
+
+            $seen[$item['url']] = true;
+            $news = $item['news'];
+
+            $sitemap->add(Url::create($item['url'])->addNews(
+                $news->publication ?? SeoFiles::siteName($item['locale']),
+                $this->newsLanguage($news->language ?? $item['locale']),
+                $news->title,
+                $news->publishedAt,
+            ));
+        }
+
+        $this->newsWritten = count($seen);
+        $this->writeAtomically($path, $sitemap->render());
+
+        return $path;
+    }
+
+    /**
+     * Google wants an ISO 639 code (`en`, `uk`, `pt`); the only exceptions are `zh-cn` and
+     * `zh-tw`.
+     */
+    private function newsLanguage(string $locale): string
+    {
+        $parts = preg_split('/[-_]/', strtolower($locale)) ?: [$locale];
+
+        if ($parts[0] === 'zh') {
+            return in_array('tw', $parts, true) || in_array('hant', $parts, true) || in_array('hk', $parts, true) ? 'zh-tw' : 'zh-cn';
+        }
+
+        return $parts[0];
+    }
+
+    private function notifyIndexNow(): void
+    {
+        if (!IndexNow::enabled()) {
+            return;
+        }
+
+        try {
+            IndexNow::afterGeneration($this->emitted);
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /**

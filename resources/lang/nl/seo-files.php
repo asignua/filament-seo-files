@@ -22,6 +22,8 @@ return [
         'language' => 'Taal',
         'title' => 'Titel',
         'title_help' => 'Alleen een label voor het beheer; het komt niet in de sitemap.',
+        'images' => 'Afbeeldingen',
+        'images_help' => 'Eén afbeeldings-URL per regel (absoluut of pad vanaf de root). Ze komen in de afbeeldingensitemap.',
         'url' => 'Adres',
         'url_help' => 'Een pad vanaf de root van de site zonder taalvoorvoegsel (search, feeds/news) of een volledig adres met https://.',
         'active' => 'Actief',

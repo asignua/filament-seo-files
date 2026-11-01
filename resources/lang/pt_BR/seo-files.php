@@ -22,6 +22,8 @@ return [
         'language' => 'Idioma',
         'title' => 'Título',
         'title_help' => 'Um rótulo apenas para o painel; não vai para o sitemap.',
+        'images' => 'Imagens',
+        'images_help' => 'Uma URL de imagem por linha (absoluta ou caminho a partir da raiz). Vão para o sitemap de imagens.',
         'url' => 'Endereço',
         'url_help' => 'Um caminho a partir da raiz do site sem prefixo de idioma (search, feeds/news) ou um endereço completo com https://.',
         'active' => 'Ativo',

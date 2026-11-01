@@ -22,6 +22,8 @@ return [
         'language' => 'Lingua',
         'title' => 'Titolo',
         'title_help' => 'Un’etichetta solo per l’amministrazione; non finisce nella sitemap.',
+        'images' => 'Immagini',
+        'images_help' => 'Un URL di immagine per riga (assoluto o percorso dalla radice). Vanno nella sitemap delle immagini.',
         'url' => 'Indirizzo',
         'url_help' => 'Un percorso dalla radice del sito senza prefisso di lingua (search, feeds/news) oppure un indirizzo completo con https://.',
         'active' => 'Attivo',

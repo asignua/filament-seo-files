@@ -22,6 +22,8 @@ return [
         'language' => 'Dil',
         'title' => 'Başlık',
         'title_help' => 'Yalnızca yönetim paneli için bir etiket; site haritasına girmez.',
+        'images' => 'Görseller',
+        'images_help' => 'Satır başına bir görsel URL\'si (mutlak veya kökten yol). Görsel site haritasına girer.',
         'url' => 'Adres',
         'url_help' => 'Dil öneki olmadan site kökünden bir yol (search, feeds/news) veya https:// ile tam bir adres.',
         'active' => 'Etkin',

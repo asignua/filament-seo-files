@@ -22,6 +22,8 @@ return [
         'language' => 'Idioma',
         'title' => 'Título',
         'title_help' => 'Una etiqueta solo para el panel; no llega al sitemap.',
+        'images' => 'Imágenes',
+        'images_help' => 'Una URL de imagen por línea (absoluta o ruta desde la raíz). Van al sitemap de imágenes.',
         'url' => 'Dirección',
         'url_help' => 'Una ruta desde la raíz del sitio sin prefijo de idioma (search, feeds/news) o una dirección completa con https://.',
         'active' => 'Activo',

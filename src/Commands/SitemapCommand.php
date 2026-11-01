@@ -35,6 +35,10 @@ class SitemapCommand extends Command
             $this->info("sitemap.xml is an index of {$result['chunks']} part(s)");
         }
 
+        if ($result['news'] > 0) {
+            $this->info("News sitemap: {$result['news']} article(s)");
+        }
+
         if ($result['skipped'] > 0) {
             $this->warn("Manual URLs skipped as duplicates: {$result['skipped']}");
         }

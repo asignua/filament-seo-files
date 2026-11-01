@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentSeoFiles\Sources;
 
+use Asignua\FilamentSeoFiles\Contracts\HasSitemapImages;
 use Asignua\FilamentSeoFiles\Contracts\LlmsFullSource;
 use Asignua\FilamentSeoFiles\Contracts\LlmsIndexSource;
 use Asignua\FilamentSeoFiles\Contracts\SitemapSource;
@@ -11,6 +12,7 @@ use Asignua\FilamentSeoFiles\Data\LlmsDocument;
 use Asignua\FilamentSeoFiles\Data\LlmsLink;
 use Asignua\FilamentSeoFiles\Data\LlmsSection;
 use Asignua\FilamentSeoFiles\Data\SitemapEntry;
+use Asignua\FilamentSeoFiles\Data\SitemapNews;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\SitemapLocation;
 use Closure;
@@ -63,6 +65,12 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
 
     /** @var (Closure(TModel): ?DateTimeInterface)|null */
     private ?Closure $lastModified = null;
+
+    /** @var (Closure(TModel): iterable<string>)|null */
+    private ?Closure $images = null;
+
+    /** @var (Closure(TModel, string): ?SitemapNews)|null */
+    private ?Closure $news = null;
 
     private ?string $section = null;
 
@@ -185,6 +193,33 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
     }
 
     /**
+     * The images of a record for the image sitemap (`sitemap.images.enabled`): absolute URLs
+     * or paths from the site root. Without this closure a model implementing
+     * {@see HasSitemapImages} supplies them.
+     *
+     * @param Closure(TModel): iterable<string> $callback
+     */
+    public function images(Closure $callback): static
+    {
+        $this->images = $callback;
+
+        return $this;
+    }
+
+    /**
+     * The news item of a record in a language for the news sitemap (`sitemap.news.enabled`).
+     * Return null for a record that is not an article (or has no news in that language).
+     *
+     * @param Closure(TModel, string): ?SitemapNews $callback
+     */
+    public function news(Closure $callback): static
+    {
+        $this->news = $callback;
+
+        return $this;
+    }
+
+    /**
      * The `## H2` title of the llms.txt section; default: the plural headline of the
      * model's class name.
      */
@@ -263,7 +298,7 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
             // <loc> is the default language, or the first one that has a URL.
             $loc = $alternates[$default] ?? $alternates[array_key_first($alternates)];
 
-            yield new SitemapEntry($loc, $alternates, $this->lastModifiedOf($record));
+            yield new SitemapEntry($loc, $alternates, $this->lastModifiedOf($record), $this->imagesOf($record), $this->newsOf($record, array_keys($alternates)));
         }
     }
 
@@ -469,6 +504,51 @@ class ModelSource implements LlmsFullSource, LlmsIndexSource, SitemapSource
             'remove_nodes' => 'script style',
             'header_style' => 'atx',
         ]))->convert($body));
+    }
+
+    /**
+     * @param TModel $record
+     *
+     * @return iterable<string>
+     */
+    private function imagesOf(Model $record): iterable
+    {
+        // A generator: nothing runs (no relation query per record) unless the image sitemap
+        // is on and the generator actually iterates.
+        return (function () use ($record): iterable {
+            if ($this->images !== null) {
+                yield from ($this->images)($record);
+            } elseif ($record instanceof HasSitemapImages) {
+                yield from $record->sitemapImages();
+            }
+        })();
+    }
+
+    /**
+     * @param TModel       $record
+     * @param list<string> $locales the languages the record has a URL in
+     *
+     * @return array<string, SitemapNews>|null
+     */
+    private function newsOf(Model $record, array $locales): ?array
+    {
+        $callback = $this->news;
+
+        if ($callback === null || !config('filament-seo-files.sitemap.news.enabled', false)) {
+            return null;
+        }
+
+        $items = [];
+
+        foreach ($locales as $locale) {
+            $item = $callback($record, (string) $locale);
+
+            if ($item instanceof SitemapNews) {
+                $items[(string) $locale] = $item;
+            }
+        }
+
+        return $items === [] ? null : $items;
     }
 
     /**

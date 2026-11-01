@@ -22,6 +22,8 @@ return [
         'language' => 'Langue',
         'title' => 'Titre',
         'title_help' => 'Un libellé réservé à l’administration ; il n’apparaît pas dans le sitemap.',
+        'images' => 'Images',
+        'images_help' => 'Une URL d\'image par ligne (absolue ou chemin depuis la racine). Elles vont dans le sitemap d\'images.',
         'url' => 'Adresse',
         'url_help' => 'Un chemin depuis la racine du site sans préfixe de langue (search, feeds/news) ou une adresse complète avec https://.',
         'active' => 'Actif',

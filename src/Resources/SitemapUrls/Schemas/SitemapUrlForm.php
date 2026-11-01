@@ -8,6 +8,7 @@ use Asignua\FilamentSeoFiles\Repositories\SitemapUrlRepository;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\Support\SitemapLocation;
 use Closure;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Group;
@@ -35,6 +36,15 @@ class SitemapUrlForm
                     Toggle::make('active')
                         ->label(__('filament-seo-files::seo-files.fields.active'))
                         ->default(true),
+
+                    // Only when the image sitemap is on and the optional column exists.
+                    Textarea::make('images')
+                        ->label(__('filament-seo-files::seo-files.fields.images'))
+                        ->helperText(__('filament-seo-files::seo-files.fields.images_help'))
+                        ->rows(3)
+                        ->formatStateUsing(static fn (mixed $state): string => is_array($state) ? implode("\n", $state) : (string) $state)
+                        ->rules(['nullable', 'string', 'max:20000'])
+                        ->visible(static fn (): bool => (bool) config('filament-seo-files.sitemap.images.enabled', false) && SitemapUrlRepository::hasImagesColumn()),
 
                     count($locales) > 1
                         ? Tabs::make('locales')
