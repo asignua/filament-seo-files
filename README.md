@@ -426,6 +426,15 @@ vendor/bin/pint --test
 The suite runs on [Orchestra Testbench](https://packages.tools/testbench) with a `workbench/` panel and a `Post` model.
 Tests write into a throw-away `public/`, never the real one.
 
+## More plugins by asign
+
+- [Translation Manager](https://filamentphp.com/plugins/asign-translation-manager) — edit and scan Laravel translations in the panel
+- [Redirects](https://filamentphp.com/plugins/asign-redirects) — managed redirects and a 404 log
+- [Translatable Fields](https://filamentphp.com/plugins/asign-translatable-fields) — locale tabs for spatie/laravel-translatable forms
+- [Themes](https://filamentphp.com/plugins/asign-themes) — per-user and per-panel colour themes
+
+All plugins: <https://filamentphp.com/plugins?q=asign>
+
 ## License
 
 The MIT License (MIT). See [LICENSE.md](LICENSE.md).
