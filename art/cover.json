@@ -1,0 +1,17 @@
+{
+    "shots": [],
+    "covers": [
+        {
+            "html": "../../scripts/art/cover.html",
+            "out": "cover.jpg",
+            "query": {
+                "eyebrow": "Plugin for Filament 5",
+                "title": "SEO Files",
+                "lead": "sitemap.xml with hreflang, images and news, robots.txt, llms.txt for AI agents \u2014 and IndexNow pings to Bing and Yandex the moment a page changes.",
+                "chips": "Images|News|IndexNow|llms.txt",
+                "shot": "../../filament-seo-files/art/sitemap-xml.jpg",
+                "crop": "0,0,1900,1260"
+            }
+        }
+    ]
+}
