@@ -130,4 +130,61 @@ class LlmsTxtRenderTest extends TestCase
     {
         $this->assertSame("# T\n", LlmsTxt::render('T', null, []));
     }
+
+    public function test_section_with_body_only_is_rendered(): void
+    {
+        $txt = LlmsTxt::render('T', null, [
+            new LlmsSection('For AI assistants', [], "Ask the person first.\n\n- Never invent data."),
+        ]);
+
+        $this->assertSame(
+            "# T\n"
+            ."\n"
+            ."## For AI assistants\n"
+            ."\n"
+            ."Ask the person first.\n"
+            ."\n"
+            ."- Never invent data.\n",
+            $txt,
+        );
+    }
+
+    public function test_body_goes_before_links(): void
+    {
+        $txt = LlmsTxt::render('T', null, [
+            new LlmsSection('Tours', [new LlmsLink('All tours', 'https://example.com/tours')], 'Prices are in UAH.'),
+        ]);
+
+        $this->assertStringContainsString(
+            "## Tours\n\nPrices are in UAH.\n\n- [All tours](https://example.com/tours)\n",
+            $txt,
+        );
+    }
+
+    public function test_section_with_blank_body_and_no_links_is_skipped(): void
+    {
+        $txt = LlmsTxt::render('T', null, [new LlmsSection('Empty', [], "  \n ")]);
+
+        $this->assertSame("# T\n", $txt);
+    }
+
+    public function test_heading_in_body_does_not_break_the_structure(): void
+    {
+        // A heading inside the body would turn the prose into a new section (or a second H1).
+        $txt = LlmsTxt::render('T', null, [
+            new LlmsSection('Rules', [], "# Not a title\n   ## Nor a section\nPlain #hashtag"),
+        ]);
+
+        $this->assertStringContainsString("\\# Not a title\n", $txt);
+        $this->assertStringContainsString("\\## Nor a section\n", $txt);
+        $this->assertStringContainsString("Plain #hashtag\n", $txt);
+        $this->assertSame(1, preg_match_all('/^## /m', $txt));
+    }
+
+    public function test_body_line_endings_are_normalised_and_outer_blank_lines_trimmed(): void
+    {
+        $txt = LlmsTxt::render('T', null, [new LlmsSection('S', [], "\r\n\r\nLine one\r\nLine two\r\n\r\n")]);
+
+        $this->assertSame("# T\n\n## S\n\nLine one\nLine two\n", $txt);
+    }
 }

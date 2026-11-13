@@ -2,6 +2,10 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
+## v1.3.0 - unreleased
+
+- `llms.txt` sections can carry prose: `new LlmsSection($title, $links, $body)` — Markdown under the heading, before the links. A section is written when it has a body or links; a line of the body starting with `#` is escaped so it cannot open a new section. Existing two-argument calls are unchanged.
+
 ## v1.2.0 - 2026-11-10
 
 - Requires Filament ^5.11.2; replaced deprecated Filament API calls: Requires Filament ^5.11.2; no deprecated Filament API is used (verified with phpstan-deprecation-rules).

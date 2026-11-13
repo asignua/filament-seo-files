@@ -30,17 +30,23 @@ class LlmsTxt
         }
 
         foreach ($sections as $section) {
-            if ($section->links === []) {
+            $body = self::body($section->body);
+
+            if ($section->links === [] && $body === '') {
                 continue;
             }
 
-            $lines = ['## '.self::line($section->title), ''];
+            $parts = ['## '.self::line($section->title)];
 
-            foreach ($section->links as $link) {
-                $lines[] = self::renderLink($link);
+            if ($body !== '') {
+                $parts[] = $body;
             }
 
-            $blocks[] = implode("\n", $lines);
+            if ($section->links !== []) {
+                $parts[] = implode("\n", array_map(self::renderLink(...), $section->links));
+            }
+
+            $blocks[] = implode("\n\n", $parts);
         }
 
         return implode("\n\n", $blocks)."\n";
@@ -52,6 +58,21 @@ class LlmsTxt
         $description = self::escape($link->description);
 
         return $description !== '' ? $line.': '.$description : $line;
+    }
+
+    /**
+     * Section prose: line endings normalised, outer blank lines trimmed, and every line that
+     * would start a heading escaped — a `#` there would end the section or open a second H1.
+     */
+    private static function body(?string $value): string
+    {
+        $text = trim(str_replace(["\r\n", "\r"], "\n", (string) $value), "\n");
+
+        if (trim($text) === '') {
+            return '';
+        }
+
+        return (string) preg_replace('/^[ \t]*(#)/m', '\\\\$1', $text);
     }
 
     /**

@@ -390,6 +390,15 @@ SeoFiles::routes();            // before the catch-all
 Route::get('/{path?}', …)->where('path', '.*');
 ```
 
+A section can carry prose as well as links: the third argument of `LlmsSection` is Markdown (paragraphs, lists) shown
+under the heading, before the links — rules for AI agents, contacts, terms. A section needs a body or links to be
+written at all. Headings are not allowed inside it (llmstxt.org has none there), so a line starting with `#` is
+escaped:
+
+```php
+yield new LlmsSection('For AI assistants', [], "Ask the person before sending anything.\n\n- Never invent data.");
+```
+
 The index is built from the sections of every `LlmsIndexSource`, plus an `## Optional` section that points at
 `sitemap.xml` (the spec lets an agent skip it when it needs a shorter context). The blockquote under the title comes
 from `SeoFiles::descriptionUsing(...)`; the language is checked against `^[a-z]{2,3}([-_][A-Za-z]{2,4})?$` before any
