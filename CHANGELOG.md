@@ -2,7 +2,7 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
-## v1.4.0 - unreleased
+## v1.4.0 - 2026-11-14
 
 - The robots.txt editor has three-state switches (Allowed / Disallowed / Not specified) for the `Content-Signal` keys `search`, `ai-input` and `ai-train`, with a short explanation under each. They are a view of the text — only `robots.txt` is saved — and rewrite just the `Content-Signal` line of the `User-agent: *` group (`Support\ContentSignal::parse()` / `apply()`). Translations in all ten languages.
 
