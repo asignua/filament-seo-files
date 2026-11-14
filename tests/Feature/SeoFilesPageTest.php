@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Asignua\FilamentSeoFiles\Tests\Feature;
 
 use Asignua\FilamentSeoFiles\Pages\SeoFilesPage;
+use Asignua\FilamentSeoFiles\Support\RobotsFile;
 use Asignua\FilamentSeoFiles\Tests\TestCase;
 use Filament\Actions\Action;
+use Filament\Actions\Testing\TestAction;
 use Filament\Forms\Components\Textarea;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
@@ -76,7 +78,7 @@ class SeoFilesPageTest extends TestCase
     {
         Livewire::test(SeoFilesPage::class)
             ->mountAction('editRobots')
-            ->assertSchemaStateSet(['robots' => (new \Asignua\FilamentSeoFiles\Support\RobotsFile)->template()])
+            ->assertSchemaStateSet(['robots' => (new RobotsFile)->template()])
             ->callMountedAction()
             ->assertNotified(__('filament-seo-files::seo-files.actions.saved'));
 
@@ -85,6 +87,50 @@ class SeoFilesPageTest extends TestCase
             ->assertNotified();
 
         $this->assertSame("User-agent: *\nDisallow: /private\n", File::get(public_path('robots.txt')));
+    }
+
+    public function test_the_robots_switches_mirror_the_file_and_the_textarea(): void
+    {
+        $component = Livewire::test(SeoFilesPage::class)
+            ->mountAction('editRobots')
+            ->assertSchemaStateSet([
+                'signal_search' => 'yes',
+                'signal_ai_input' => 'yes',
+                'signal_ai_train' => 'no',
+            ]);
+
+        $component->set('mountedActions.0.data.signal_ai_input', 'unset')
+            ->set('mountedActions.0.data.signal_ai_train', 'yes')
+            ->assertSchemaStateSet([
+                'robots' => str_replace(
+                    'Content-Signal: search=yes, ai-input=yes, ai-train=no',
+                    'Content-Signal: search=yes, ai-train=yes',
+                    (new RobotsFile)->template(),
+                ),
+            ]);
+
+        $component->set('mountedActions.0.data.robots', "User-agent: *\nContent-Signal: search=no\n")
+            ->assertSchemaStateSet(['signal_search' => 'no', 'signal_ai_input' => 'unset', 'signal_ai_train' => 'unset']);
+
+        $component->callAction(TestAction::make('reset')->schemaComponent('robots'))
+            ->assertSchemaStateSet([
+                'robots' => (new RobotsFile)->template(),
+                'signal_search' => 'yes',
+                'signal_ai_input' => 'yes',
+                'signal_ai_train' => 'no',
+            ]);
+    }
+
+    public function test_saving_writes_only_the_text(): void
+    {
+        Livewire::test(SeoFilesPage::class)
+            ->mountAction('editRobots')
+            ->set('mountedActions.0.data.signal_search', 'no')
+            ->callMountedAction()
+            ->assertNotified();
+
+        $this->assertStringContainsString('Content-Signal: search=no, ai-input=yes, ai-train=no', File::get(public_path('robots.txt')));
+        $this->assertStringNotContainsString('signal_', File::get(public_path('robots.txt')));
     }
 
     public function test_the_llms_editor_saves_the_chosen_language(): void

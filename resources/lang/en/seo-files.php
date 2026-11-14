@@ -58,4 +58,27 @@ return [
         'robots_missing' => 'The file does not exist yet — save it to publish the recommended template.',
         'llms_languages' => 'Languages: :locales',
     ],
+    'signals' => [
+        'heading' => 'Content-Signal',
+        'description' => 'A preference you state for crawlers, not a lock: honest bots follow it, the others have to be blocked at the CDN or server level. See contentsignals.org.',
+        'keys' => [
+            'search' => [
+                'label' => 'Search',
+                'help' => 'Building a search index and showing links and snippets in search results (not AI-generated summaries).',
+            ],
+            'ai-input' => [
+                'label' => 'AI answers',
+                'help' => 'Using pages as a real-time source for AI answers: AI overviews, retrieval-augmented generation, chat assistants and agents reading the site. Turning it off also stops AI assistants from using llms.txt instructions.',
+            ],
+            'ai-train' => [
+                'label' => 'AI training',
+                'help' => 'Training or fine-tuning AI models on the content.',
+            ],
+        ],
+        'options' => [
+            'yes' => 'Allowed',
+            'no' => 'Disallowed',
+            'unset' => 'Not specified',
+        ],
+    ],
 ];

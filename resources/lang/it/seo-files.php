@@ -58,4 +58,27 @@ return [
         'robots_missing' => 'Il file non esiste ancora: salvalo per pubblicare il modello consigliato.',
         'llms_languages' => 'Lingue: :locales',
     ],
+    'signals' => [
+        'heading' => 'Content-Signal',
+        'description' => 'Una preferenza dichiarata ai crawler, non un blocco: i bot corretti la rispettano, gli altri vanno bloccati a livello di CDN o server. Vedi contentsignals.org.',
+        'keys' => [
+            'search' => [
+                'label' => 'Ricerca',
+                'help' => 'Creare un indice di ricerca e mostrare link e snippet nei risultati (non riassunti generati dall\'IA).',
+            ],
+            'ai-input' => [
+                'label' => 'Risposte dell\'IA',
+                'help' => 'Usare le pagine come fonte in tempo reale per le risposte dell\'IA: panoramiche IA, generazione aumentata dal recupero, assistenti chat e agenti che leggono il sito. Disattivarlo impedisce anche agli assistenti IA di usare le istruzioni di llms.txt.',
+            ],
+            'ai-train' => [
+                'label' => 'Addestramento dell\'IA',
+                'help' => 'Addestrare o affinare modelli di IA con i contenuti.',
+            ],
+        ],
+        'options' => [
+            'yes' => 'Consentito',
+            'no' => 'Vietato',
+            'unset' => 'Non specificato',
+        ],
+    ],
 ];

@@ -58,4 +58,27 @@ return [
         'robots_missing' => 'Dosya henüz yok — önerilen şablonu yayımlamak için kaydedin.',
         'llms_languages' => 'Diller: :locales',
     ],
+    'signals' => [
+        'heading' => 'Content-Signal',
+        'description' => 'Tarayıcı botlara bildirilen bir tercihtir, kilit değildir: dürüst botlar buna uyar, diğerlerinin CDN veya sunucu düzeyinde engellenmesi gerekir. Bkz. contentsignals.org.',
+        'keys' => [
+            'search' => [
+                'label' => 'Arama',
+                'help' => 'Arama dizini oluşturma ve arama sonuçlarında bağlantı ile özet gösterme (yapay zekâ özetleri değil).',
+            ],
+            'ai-input' => [
+                'label' => 'Yapay zekâ yanıtları',
+                'help' => 'Sayfaları yapay zekâ yanıtları için gerçek zamanlı kaynak olarak kullanma: yapay zekâ özetleri, geri getirmeyle zenginleştirilmiş üretim, sohbet asistanları ve siteyi okuyan ajanlar. Kapatmak, yapay zekâ asistanlarının llms.txt yönergelerini kullanmasını da engeller.',
+            ],
+            'ai-train' => [
+                'label' => 'Yapay zekâ eğitimi',
+                'help' => 'Yapay zekâ modellerini içerikle eğitme veya ince ayarlama.',
+            ],
+        ],
+        'options' => [
+            'yes' => 'İzin verildi',
+            'no' => 'Yasak',
+            'unset' => 'Belirtilmedi',
+        ],
+    ],
 ];

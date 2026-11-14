@@ -6,3 +6,4 @@
 - Commands: `seo-files:sitemap`, `seo-files:llms {--locale=*}`. Schedule: `filament-seo-files.schedule.enabled` (off by default, needs the Laravel scheduler).
 - Prefixed languages get `/{locale}/llms.txt` and `/{locale}/llms-full.txt` as ROUTES (a real `public/{locale}/` directory would shadow the home page). A site with a catch-all route sets `routes.register` to `false` and calls `SeoFiles::routes()` before it.
 - Authorization fails closed: ALWAYS pass `SeoFilesPlugin::make()->authorize(fn (): bool => ...)` (or `->authorize(true)` for every panel user), or define the `seo-files.manage` gate — otherwise nobody sees the page, the resource or the actions. The four public actions check `SeoFilesPlugin::allows()` themselves.
+- The robots.txt editor shows Allowed/Disallowed/Not specified switches for `Content-Signal` (`search`, `ai-input`, `ai-train`) that only edit the text; use the pure `Support\ContentSignal::parse()/apply()` to read or change that line in code.

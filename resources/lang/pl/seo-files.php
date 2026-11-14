@@ -58,4 +58,27 @@ return [
         'robots_missing' => 'Plik jeszcze nie istnieje — zapisz go, aby opublikować zalecany szablon.',
         'llms_languages' => 'Języki: :locales',
     ],
+    'signals' => [
+        'heading' => 'Content-Signal',
+        'description' => 'Preferencja dla robotów, a nie blokada: uczciwe boty ją respektują, pozostałe trzeba blokować na poziomie CDN lub serwera. Zobacz contentsignals.org.',
+        'keys' => [
+            'search' => [
+                'label' => 'Wyszukiwanie',
+                'help' => 'Budowanie indeksu wyszukiwania oraz pokazywanie linków i fragmentów w wynikach (nie streszczeń generowanych przez AI).',
+            ],
+            'ai-input' => [
+                'label' => 'Odpowiedzi AI',
+                'help' => 'Wykorzystywanie stron jako źródła w czasie rzeczywistym dla odpowiedzi AI: przeglądów AI, generowania wspomaganego wyszukiwaniem, asystentów czatu i agentów czytających witrynę. Wyłączenie uniemożliwia też asystentom AI korzystanie z instrukcji z llms.txt.',
+            ],
+            'ai-train' => [
+                'label' => 'Trenowanie AI',
+                'help' => 'Trenowanie lub dostrajanie modeli AI na treściach.',
+            ],
+        ],
+        'options' => [
+            'yes' => 'Dozwolone',
+            'no' => 'Zabronione',
+            'unset' => 'Nie określono',
+        ],
+    ],
 ];

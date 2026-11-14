@@ -58,4 +58,27 @@ return [
         'robots_missing' => 'Die Datei existiert noch nicht – speichern Sie sie, um die empfohlene Vorlage zu veröffentlichen.',
         'llms_languages' => 'Sprachen: :locales',
     ],
+    'signals' => [
+        'heading' => 'Content-Signal',
+        'description' => 'Eine Präferenz für Crawler, keine Sperre: seriöse Bots halten sich daran, alle anderen müssen auf CDN- oder Serverebene blockiert werden. Siehe contentsignals.org.',
+        'keys' => [
+            'search' => [
+                'label' => 'Suche',
+                'help' => 'Aufbau eines Suchindex sowie Anzeige von Links und Snippets in Suchergebnissen (keine KI-generierten Zusammenfassungen).',
+            ],
+            'ai-input' => [
+                'label' => 'KI-Antworten',
+                'help' => 'Nutzung der Seiten als Echtzeitquelle für KI-Antworten: KI-Übersichten, Retrieval-Augmented Generation, Chat-Assistenten und Agenten, die die Website lesen. Wer es ausschaltet, hindert KI-Assistenten auch daran, die Anweisungen aus llms.txt zu nutzen.',
+            ],
+            'ai-train' => [
+                'label' => 'KI-Training',
+                'help' => 'Training oder Feintuning von KI-Modellen mit den Inhalten.',
+            ],
+        ],
+        'options' => [
+            'yes' => 'Erlaubt',
+            'no' => 'Verboten',
+            'unset' => 'Nicht angegeben',
+        ],
+    ],
 ];

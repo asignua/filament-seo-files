@@ -58,4 +58,27 @@ return [
         'robots_missing' => 'Het bestand bestaat nog niet: sla het op om het aanbevolen sjabloon te publiceren.',
         'llms_languages' => 'Talen: :locales',
     ],
+    'signals' => [
+        'heading' => 'Content-Signal',
+        'description' => 'Een voorkeur voor crawlers, geen slot: eerlijke bots houden zich eraan, de rest moet op CDN- of serverniveau worden geblokkeerd. Zie contentsignals.org.',
+        'keys' => [
+            'search' => [
+                'label' => 'Zoeken',
+                'help' => 'Een zoekindex opbouwen en links en fragmenten tonen in zoekresultaten (geen door AI gegenereerde samenvattingen).',
+            ],
+            'ai-input' => [
+                'label' => 'AI-antwoorden',
+                'help' => 'Pagina\'s gebruiken als realtimebron voor AI-antwoorden: AI-overzichten, retrieval-augmented generation, chatassistenten en agents die de site lezen. Uitschakelen voorkomt ook dat AI-assistenten de instructies uit llms.txt gebruiken.',
+            ],
+            'ai-train' => [
+                'label' => 'AI-training',
+                'help' => 'AI-modellen trainen of finetunen op de inhoud.',
+            ],
+        ],
+        'options' => [
+            'yes' => 'Toegestaan',
+            'no' => 'Niet toegestaan',
+            'unset' => 'Niet opgegeven',
+        ],
+    ],
 ];

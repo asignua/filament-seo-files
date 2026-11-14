@@ -356,6 +356,12 @@ SeoFiles::robotsTemplateUsing(fn (string $baseUrl, string $default): string => $
 
 Edit the live file from the panel ("SEO files" page → robots.txt → Edit, with a "Reset to template" button).
 
+Above the text the editor shows three switches for the `Content-Signal` keys `search`, `ai-input` and `ai-train`: Allowed, Disallowed
+or Not specified (the key is left out, meaning no preference). They are only a view of the text: moving a switch rewrites that one
+line in the `User-agent: *` group (other lines, unknown keys and line endings stay), and editing the text moves the switches. Only
+the text is saved. The signal is a preference, not a lock: honest bots follow it, the rest must be blocked at the CDN or server.
+The parser and writer are the pure class `Support\ContentSignal` (`parse()` / `apply()`).
+
 ## llms.txt and llms-full.txt
 
 [llms.txt](https://llmstxt.org) is a short curated index of the site for AI agents; `llms-full.txt` carries the full text

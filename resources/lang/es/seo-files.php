@@ -58,4 +58,27 @@ return [
         'robots_missing' => 'El archivo aún no existe: guárdelo para publicar la plantilla recomendada.',
         'llms_languages' => 'Idiomas: :locales',
     ],
+    'signals' => [
+        'heading' => 'Content-Signal',
+        'description' => 'Una preferencia que indicas a los rastreadores, no un bloqueo: los bots honestos la respetan; al resto hay que bloquearlos en el CDN o el servidor. Consulta contentsignals.org.',
+        'keys' => [
+            'search' => [
+                'label' => 'Búsqueda',
+                'help' => 'Crear un índice de búsqueda y mostrar enlaces y fragmentos en los resultados (no resúmenes generados por IA).',
+            ],
+            'ai-input' => [
+                'label' => 'Respuestas de IA',
+                'help' => 'Usar las páginas como fuente en tiempo real para respuestas de IA: resúmenes de IA, generación aumentada por recuperación, asistentes de chat y agentes que leen el sitio. Desactivarlo también impide que los asistentes de IA usen las instrucciones de llms.txt.',
+            ],
+            'ai-train' => [
+                'label' => 'Entrenamiento de IA',
+                'help' => 'Entrenar o ajustar modelos de IA con el contenido.',
+            ],
+        ],
+        'options' => [
+            'yes' => 'Permitido',
+            'no' => 'Prohibido',
+            'unset' => 'No especificado',
+        ],
+    ],
 ];
