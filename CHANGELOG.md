@@ -2,6 +2,10 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
+## v1.5.1 - 2026-11-20
+
+- Changelog only, no code changes: the `v1.5.0` tag shipped with this file still headed «Unreleased». Use `v1.5.1` for the same code with the corrected changelog.
+
 ## v1.5.0 - 2026-11-20
 
 - IndexNow in the panel: `Actions\PingIndexNowAction` (a «Send to IndexNow» button on the SEO files page, hidden until IndexNow is enabled with a valid key) and `seo-files:indexnow --all`, which pings every URL of the generated sitemap (`SitemapFile::urls()` streams the `<loc>`s across all parts). Translations in all ten languages.
