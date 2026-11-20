@@ -32,7 +32,7 @@ class IndexNowCommand extends Command
         $urls = (array) $this->argument('urls');
 
         if ((bool) $this->option('all')) {
-            $urls = [...new SitemapFile()->urls()];
+            $urls = [...(new SitemapFile())->urls()];
 
             if ($urls === []) {
                 $this->error('No sitemap to read: run seo-files:sitemap first.');
