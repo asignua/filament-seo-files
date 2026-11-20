@@ -17,6 +17,8 @@ return [
         'failed' => 'Polecenie zakończyło się błędem',
         'generate_llms_warning' => 'Pliki llms.txt i llms-full.txt wszystkich języków zostaną zbudowane od nowa ze źródeł. Zmiany wprowadzone w edytorze zostaną zastąpione.',
         'scheduled_overwrite' => 'Pliki są też budowane od nowa codziennie o :time, co zastępuje zmiany wprowadzone tutaj.',
+        'indexnow' => 'Wyślij do IndexNow',
+        'indexnow_warning' => 'Wszystkie adresy z wygenerowanego sitemap zostaną teraz wysłane do wyszukiwarek IndexNow (Bing, Yandex…). Najpierw wygeneruj sitemap.',
     ],
     'fields' => [
         'language' => 'Język',
@@ -57,6 +59,9 @@ return [
         'file_exists' => 'Plik jest zapisany na dysku.',
         'robots_missing' => 'Plik jeszcze nie istnieje — zapisz go, aby opublikować zalecany szablon.',
         'llms_languages' => 'Języki: :locales',
+        'indexnow_help' => 'Od razu informuje wyszukiwarki o zmienionych stronach, bez czekania aż ponownie odczytają sitemap.',
+        'indexnow_on' => 'IndexNow jest włączony.',
+        'indexnow_off' => 'IndexNow jest wyłączony: włącz go i ustaw klucz w konfiguracji.',
     ],
     'signals' => [
         'heading' => 'Content-Signal',

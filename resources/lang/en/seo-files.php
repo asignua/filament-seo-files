@@ -17,6 +17,8 @@ return [
         'failed' => 'Command failed',
         'generate_llms_warning' => 'Every language\'s llms.txt and llms-full.txt is rebuilt from the sources. Changes made in the editor are replaced.',
         'scheduled_overwrite' => 'The files are also rebuilt daily at :time, which replaces changes made here.',
+        'indexnow' => 'Send to IndexNow',
+        'indexnow_warning' => 'Every URL of the generated sitemap is sent to the IndexNow engines (Bing, Yandex…) right now. Generate the sitemap first.',
     ],
     'fields' => [
         'language' => 'Language',
@@ -57,6 +59,9 @@ return [
         'file_exists' => 'The file is saved on disk.',
         'robots_missing' => 'The file does not exist yet — save it to publish the recommended template.',
         'llms_languages' => 'Languages: :locales',
+        'indexnow_help' => 'Tells search engines about changed pages right away instead of waiting for them to re-read the sitemap.',
+        'indexnow_on' => 'IndexNow is on.',
+        'indexnow_off' => 'IndexNow is off: enable it and set a key in the config.',
     ],
     'signals' => [
         'heading' => 'Content-Signal',

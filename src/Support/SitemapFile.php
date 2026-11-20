@@ -141,6 +141,46 @@ class SitemapFile
     }
 
     /**
+     * Every `<loc>` of a `<url>` entry, across all parts when the sitemap is an index.
+     * Streamed with XMLReader (a part can be 50 MB). hreflang alternates are `xhtml:link`
+     * attributes, not `<loc>`, so each page comes once.
+     *
+     * @return \Generator<int, string>
+     */
+    public function urls(): \Generator
+    {
+        if (!$this->exists()) {
+            return;
+        }
+
+        foreach ($this->isIndex() ? $this->chunkFiles() : [$this->path()] as $file) {
+            $reader = new \XMLReader;
+
+            if (!@$reader->open($file)) {
+                continue;
+            }
+
+            $inUrl = false;
+
+            while (@$reader->read()) {
+                if ($reader->nodeType === \XMLReader::ELEMENT && $reader->localName === 'url') {
+                    $inUrl = true;
+                } elseif ($reader->nodeType === \XMLReader::END_ELEMENT && $reader->localName === 'url') {
+                    $inUrl = false;
+                } elseif ($inUrl && $reader->nodeType === \XMLReader::ELEMENT && $reader->localName === 'loc') {
+                    $loc = trim($reader->readString());
+
+                    if ($loc !== '') {
+                        yield $loc;
+                    }
+                }
+            }
+
+            $reader->close();
+        }
+    }
+
+    /**
      * The root element sits in the first few hundred bytes: read the head of the file, not
      * the whole of it (a single sitemap can be 50 MB).
      */

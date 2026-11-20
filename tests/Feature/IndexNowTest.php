@@ -93,6 +93,41 @@ class IndexNowTest extends TestCase
         });
     }
 
+    public function test_all_pings_every_url_of_the_generated_sitemap(): void
+    {
+        $this->enable();
+        $this->makePost('a');
+        $this->makePost('b');
+        $this->registerPosts();
+        $this->artisan('seo-files:sitemap')->assertExitCode(0);
+
+        Bus::fake();
+        $this->artisan('seo-files:indexnow', ['--all' => true])->assertExitCode(0);
+
+        Bus::assertDispatched(PingIndexNow::class, function (PingIndexNow $job): bool {
+            sort($job->urls);
+
+            return $job->urls === ['https://site.test/posts/a', 'https://site.test/posts/b'];
+        });
+    }
+
+    public function test_all_without_a_sitemap_fails(): void
+    {
+        $this->enable();
+        File::delete((new \Asignua\FilamentSeoFiles\Support\SitemapFile)->path());
+
+        $this->artisan('seo-files:indexnow', ['--all' => true])->assertExitCode(1);
+    }
+
+    public function test_the_action_is_hidden_until_indexnow_is_on(): void
+    {
+        $this->assertFalse(\Asignua\FilamentSeoFiles\Actions\PingIndexNowAction::make()->isVisible());
+
+        $this->enable();
+
+        $this->assertTrue(\Asignua\FilamentSeoFiles\Actions\PingIndexNowAction::make()->isVisible());
+    }
+
     public function test_throttle_defers_changes_to_a_later_run(): void
     {
         $this->enable(['throttle_seconds' => 3600]);

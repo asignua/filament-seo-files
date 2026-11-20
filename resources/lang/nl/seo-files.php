@@ -17,6 +17,8 @@ return [
         'failed' => 'Opdracht mislukt',
         'generate_llms_warning' => 'llms.txt en llms-full.txt worden voor elke taal opnieuw opgebouwd uit de bronnen. Wijzigingen in de editor worden vervangen.',
         'scheduled_overwrite' => 'De bestanden worden ook dagelijks om :time opnieuw opgebouwd, waarbij wijzigingen hier worden vervangen.',
+        'indexnow' => 'Naar IndexNow sturen',
+        'indexnow_warning' => 'Alle URL\'s van de gegenereerde sitemap worden nu naar de IndexNow-zoekmachines (Bing, Yandex…) gestuurd. Genereer eerst de sitemap.',
     ],
     'fields' => [
         'language' => 'Taal',
@@ -57,6 +59,9 @@ return [
         'file_exists' => 'Het bestand is op schijf opgeslagen.',
         'robots_missing' => 'Het bestand bestaat nog niet: sla het op om het aanbevolen sjabloon te publiceren.',
         'llms_languages' => 'Talen: :locales',
+        'indexnow_help' => 'Meldt gewijzigde pagina\'s direct aan zoekmachines, zonder te wachten tot ze de sitemap opnieuw lezen.',
+        'indexnow_on' => 'IndexNow staat aan.',
+        'indexnow_off' => 'IndexNow staat uit: schakel het in en stel een sleutel in via de configuratie.',
     ],
     'signals' => [
         'heading' => 'Content-Signal',

@@ -2,6 +2,10 @@
 
 All notable changes to `asignua/filament-seo-files` are documented here.
 
+## Unreleased
+
+- IndexNow in the panel: `Actions\PingIndexNowAction` (a «Send to IndexNow» button on the SEO files page, hidden until IndexNow is enabled with a valid key) and `seo-files:indexnow --all`, which pings every URL of the generated sitemap (`SitemapFile::urls()` streams the `<loc>`s across all parts). Translations in all ten languages.
+
 ## v1.4.0 - 2026-11-14
 
 - The robots.txt editor has three-state switches (Allowed / Disallowed / Not specified) for the `Content-Signal` keys `search`, `ai-input` and `ai-train`, with a short explanation under each. They are a view of the text — only `robots.txt` is saved — and rewrite just the `Content-Signal` line of the `User-agent: *` group (`Support\ContentSignal::parse()` / `apply()`). Translations in all ten languages.

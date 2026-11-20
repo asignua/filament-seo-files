@@ -335,6 +335,10 @@ pinged once, when its URL first appears. Pick another engine with `indexnow.endp
 On demand: `php artisan seo-files:indexnow https://example.com/a https://example.com/b [--now]` (only URLs of the site's
 host are sent; `--now` skips the queue), or `Asignua\FilamentSeoFiles\Support\IndexNow::submit($urls)`.
 
+`php artisan seo-files:indexnow --all` pings every URL of the generated sitemap (run `seo-files:sitemap` first). The same is
+a button on the SEO files page — `Actions\PingIndexNowAction`, shown only while IndexNow is enabled with a valid key; add it
+to your own page the way you add `GenerateSitemapAction`.
+
 ## robots.txt
 
 `RobotsFile` reads and writes `public/robots.txt`. Until the file exists the recommended template is served by the editor:
@@ -447,7 +451,7 @@ $panel->plugin(SeoFilesPlugin::make()
 | Command | |
 | --- | --- |
 | `php artisan seo-files:sitemap` | writes `sitemap.xml` (and the parts of an index, and the news sitemap) |
-| `php artisan seo-files:indexnow [urls…] [--now]` | pings IndexNow about the given URLs (no argument: checks the setup) |
+| `php artisan seo-files:indexnow [urls…] [--now] [--all]` | pings IndexNow about the given URLs, or `--all` for the whole sitemap (no argument: checks the setup) |
 | `php artisan seo-files:llms` | writes `llms.txt` and `llms-full.txt` for every language |
 | `php artisan seo-files:llms --locale=uk --locale=en` | only these languages |
 

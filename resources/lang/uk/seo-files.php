@@ -17,6 +17,8 @@ return [
         'failed' => 'Команда завершилась помилкою',
         'generate_llms_warning' => 'llms.txt і llms-full.txt усіх мов буде зібрано наново з джерел. Зміни, внесені в редакторі, буде замінено.',
         'scheduled_overwrite' => 'Файли також перезбираються щодня о :time, і це замінює зміни, внесені тут.',
+        'indexnow' => 'Надіслати в IndexNow',
+        'indexnow_warning' => 'Усі адреси зі згенерованого sitemap зараз буде надіслано пошуковим системам IndexNow (Bing, Yandex…). Спершу згенеруйте sitemap.',
     ],
     'fields' => [
         'language' => 'Мова',
@@ -57,6 +59,9 @@ return [
         'file_exists' => 'Файл збережено на диску.',
         'robots_missing' => 'Файла ще немає — збережіть його, щоб опублікувати рекомендований шаблон.',
         'llms_languages' => 'Мови: :locales',
+        'indexnow_help' => 'Одразу повідомляє пошукові системи про змінені сторінки, не чекаючи, поки вони перечитають sitemap.',
+        'indexnow_on' => 'IndexNow увімкнено.',
+        'indexnow_off' => 'IndexNow вимкнено: увімкніть його й вкажіть ключ у конфігурації.',
     ],
     'signals' => [
         'heading' => 'Content-Signal',

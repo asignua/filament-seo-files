@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Asignua\FilamentSeoFiles\Commands;
 
 use Asignua\FilamentSeoFiles\Support\IndexNow;
+use Asignua\FilamentSeoFiles\Support\SitemapFile;
 use Illuminate\Console\Command;
 
 class IndexNowCommand extends Command
 {
-    protected $signature = 'seo-files:indexnow {urls?* : Absolute URLs to ping} {--now : Send immediately instead of queueing}';
+    protected $signature = 'seo-files:indexnow {urls?* : Absolute URLs to ping} {--now : Send immediately instead of queueing} {--all : Ping every URL of the generated sitemap}';
 
     protected $description = 'Ping IndexNow about changed URLs (give the URLs, or run without arguments to check the setup)';
 
@@ -29,6 +30,16 @@ class IndexNowCommand extends Command
 
         /** @var list<string> $urls */
         $urls = (array) $this->argument('urls');
+
+        if ((bool) $this->option('all')) {
+            $urls = [...new SitemapFile()->urls()];
+
+            if ($urls === []) {
+                $this->error('No sitemap to read: run seo-files:sitemap first.');
+
+                return self::FAILURE;
+            }
+        }
 
         if ($urls === []) {
             $this->info('IndexNow is on. Key file: '.IndexNow::keyLocation());

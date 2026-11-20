@@ -17,6 +17,8 @@ return [
         'failed' => 'Befehl fehlgeschlagen',
         'generate_llms_warning' => 'llms.txt und llms-full.txt werden für jede Sprache neu aus den Quellen erstellt. Änderungen im Editor werden ersetzt.',
         'scheduled_overwrite' => 'Die Dateien werden außerdem täglich um :time neu erstellt; dabei werden hier vorgenommene Änderungen ersetzt.',
+        'indexnow' => 'An IndexNow senden',
+        'indexnow_warning' => 'Alle URLs der erzeugten Sitemap werden jetzt an die IndexNow-Suchmaschinen (Bing, Yandex …) gesendet. Erzeugen Sie zuerst die Sitemap.',
     ],
     'fields' => [
         'language' => 'Sprache',
@@ -57,6 +59,9 @@ return [
         'file_exists' => 'Die Datei ist auf dem Datenträger gespeichert.',
         'robots_missing' => 'Die Datei existiert noch nicht – speichern Sie sie, um die empfohlene Vorlage zu veröffentlichen.',
         'llms_languages' => 'Sprachen: :locales',
+        'indexnow_help' => 'Meldet geänderte Seiten sofort den Suchmaschinen, statt zu warten, bis diese die Sitemap erneut lesen.',
+        'indexnow_on' => 'IndexNow ist aktiv.',
+        'indexnow_off' => 'IndexNow ist aus: in der Konfiguration aktivieren und einen Schlüssel setzen.',
     ],
     'signals' => [
         'heading' => 'Content-Signal',

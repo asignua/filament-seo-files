@@ -17,6 +17,8 @@ return [
         'failed' => 'Komut başarısız oldu',
         'generate_llms_warning' => 'Tüm dillerin llms.txt ve llms-full.txt dosyaları kaynaklardan yeniden oluşturulur. Düzenleyicide yapılan değişikliklerin yerine yenileri yazılır.',
         'scheduled_overwrite' => 'Dosyalar ayrıca her gün :time saatinde yeniden oluşturulur ve burada yapılan değişikliklerin yerine yenileri yazılır.',
+        'indexnow' => 'IndexNow\'a gönder',
+        'indexnow_warning' => 'Oluşturulan sitemap\'teki tüm URL\'ler şimdi IndexNow arama motorlarına (Bing, Yandex…) gönderilir. Önce sitemap\'i oluşturun.',
     ],
     'fields' => [
         'language' => 'Dil',
@@ -57,6 +59,9 @@ return [
         'file_exists' => 'Dosya diske kaydedildi.',
         'robots_missing' => 'Dosya henüz yok — önerilen şablonu yayımlamak için kaydedin.',
         'llms_languages' => 'Diller: :locales',
+        'indexnow_help' => 'Değişen sayfaları, sitemap\'in yeniden okunmasını beklemeden arama motorlarına hemen bildirir.',
+        'indexnow_on' => 'IndexNow açık.',
+        'indexnow_off' => 'IndexNow kapalı: yapılandırmada açın ve bir anahtar belirleyin.',
     ],
     'signals' => [
         'heading' => 'Content-Signal',

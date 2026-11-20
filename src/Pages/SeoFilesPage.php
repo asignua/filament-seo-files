@@ -8,8 +8,10 @@ use Asignua\FilamentSeoFiles\Actions\EditLlmsAction;
 use Asignua\FilamentSeoFiles\Actions\EditRobotsAction;
 use Asignua\FilamentSeoFiles\Actions\GenerateLlmsAction;
 use Asignua\FilamentSeoFiles\Actions\GenerateSitemapAction;
+use Asignua\FilamentSeoFiles\Actions\PingIndexNowAction;
 use Asignua\FilamentSeoFiles\SeoFiles;
 use Asignua\FilamentSeoFiles\SeoFilesPlugin;
+use Asignua\FilamentSeoFiles\Support\IndexNow;
 use Asignua\FilamentSeoFiles\Support\LlmsTxtFile;
 use Asignua\FilamentSeoFiles\Support\RobotsFile;
 use Asignua\FilamentSeoFiles\Support\SitemapFile;
@@ -73,6 +75,11 @@ class SeoFilesPage extends Page
         return GenerateSitemapAction::make();
     }
 
+    public function pingIndexNowAction(): Action
+    {
+        return PingIndexNowAction::make();
+    }
+
     public function editRobotsAction(): Action
     {
         return EditRobotsAction::make();
@@ -111,6 +118,14 @@ class SeoFilesPage extends Page
                         .($parts > 0 ? ' · '.__('filament-seo-files::seo-files.page.part_count', ['count' => $parts]) : '')
                     : __('filament-seo-files::seo-files.page.not_generated'),
                 'actions' => ['generateSitemapAction'],
+            ],
+            [
+                'title' => 'IndexNow',
+                'help' => __('filament-seo-files::seo-files.page.indexnow_help'),
+                'status' => IndexNow::enabled() && IndexNow::validKey()
+                    ? __('filament-seo-files::seo-files.page.indexnow_on')
+                    : __('filament-seo-files::seo-files.page.indexnow_off'),
+                'actions' => ['pingIndexNowAction'],
             ],
             [
                 'title' => 'robots.txt',
