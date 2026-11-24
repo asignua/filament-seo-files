@@ -63,7 +63,6 @@ The generated `sitemap.xml` with reciprocal `hreflang` alternates and `x-default
 
 ![Generated sitemap.xml](https://raw.githubusercontent.com/asignua/filament-seo-files/v1.0.3/art/sitemap-xml.jpg)
 
-
 ## Requirements
 
 - PHP 8.3+
@@ -514,6 +513,10 @@ vendor/bin/pint --test
 The suite runs on [Orchestra Testbench](https://packages.tools/testbench) with a `workbench/` panel and a `Post` model.
 Tests write into a throw-away `public/`, never the real one.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
 ## More plugins by asign
 
 - [Translation Manager](https://filamentphp.com/plugins/asign-translation-manager) — edit and scan Laravel translations in the panel
@@ -522,6 +525,8 @@ Tests write into a throw-away `public/`, never the real one.
 - [Themes](https://filamentphp.com/plugins/asign-themes) — per-user and per-panel colour themes
 
 All plugins: <https://filamentphp.com/plugins?q=asign>
+
+Catalogue of free and commercial plugins: <https://asign.tech/en/plugins>
 
 ## License
 
